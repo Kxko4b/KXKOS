@@ -1,0 +1,591 @@
+/*
+ * KXKOS stylesheet.
+ * Look: chunky navy outlines, cream panels, hard (blur-free) shadows, square corners.
+ * Colours live in the :root variables so the accent colour from Settings recolours everything.
+ */
+
+:root {
+  --kx-ink: #1b2a49;
+  --kx-paper: #f4efe0;
+  --kx-paper-2: #e4dcc3;
+  --kx-paper-3: #fffaf0;
+  --kx-accent: #3b8fe0;
+  --kx-accent-ink: #ffffff;
+  --kx-grass: #4cb04f;
+  --kx-inactive: #8c99b3;
+  --kx-danger: #d9483b;
+  --kx-taskbar-h: 46px;
+  --kx-font: "Trebuchet MS", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --kx-mono: "Courier New", Consolas, "Liberation Mono", monospace;
+  --kx-shadow: 4px 4px 0 rgba(27, 42, 73, 0.45);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--kx-ink);
+  font-family: var(--kx-font);
+  font-size: 14px;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px dashed var(--kx-ink);
+  outline-offset: 2px;
+}
+.kx-icon { display: block; flex: none; }
+
+/* ------------------------------------------------------------------ wallpapers */
+
+[data-wallpaper="meadow"] {
+  background:
+    radial-gradient(ellipse 130px 34px at 20% 16%, #fff 0 98%, transparent 100%),
+    radial-gradient(ellipse 90px 28px at 25% 20%, #fff 0 98%, transparent 100%),
+    radial-gradient(ellipse 110px 30px at 68% 11%, #fff 0 98%, transparent 100%),
+    radial-gradient(ellipse 80px 24px at 72% 15%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 48px at 86% 22%, #ffe36b 0 98%, transparent 100%),
+    radial-gradient(ellipse 70% 26% at 18% 100%, #3f9d46 0 99%, transparent 100%),
+    radial-gradient(ellipse 80% 22% at 88% 100%, #46a84a 0 99%, transparent 100%),
+    linear-gradient(to bottom, transparent 0 68%, #58b94f 68% 100%),
+    linear-gradient(to bottom, #3d9be9, #b5e2ff 68%);
+}
+[data-wallpaper="dusk"] {
+  background:
+    radial-gradient(circle 52px at 78% 62%, #ffd07a 0 98%, transparent 100%),
+    radial-gradient(ellipse 75% 24% at 15% 100%, #26583a 0 99%, transparent 100%),
+    radial-gradient(ellipse 80% 20% at 90% 100%, #2e6a43 0 99%, transparent 100%),
+    linear-gradient(to bottom, transparent 0 74%, #2f6a3a 74% 100%),
+    linear-gradient(to bottom, #41307a, #e8686d 55%, #ffb36b 74%);
+}
+[data-wallpaper="night"] {
+  background:
+    radial-gradient(circle 2px at 12% 14%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 2px at 28% 32%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 2px at 47% 10%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 2px at 63% 26%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 2px at 79% 12%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 2px at 91% 36%, #fff 0 98%, transparent 100%),
+    radial-gradient(circle 30px at 84% 20%, #f6f1c9 0 98%, transparent 100%),
+    radial-gradient(ellipse 70% 24% at 20% 100%, #163a24 0 99%, transparent 100%),
+    linear-gradient(to bottom, transparent 0 72%, #1d4a2c 72% 100%),
+    linear-gradient(to bottom, #070b24, #2a3a78 72%);
+}
+[data-wallpaper="teal"] { background: #1f8a8a; }
+
+/* --------------------------------------------------------------------- desktop */
+
+#kx-desktop {
+  position: fixed;
+  inset: 0 0 var(--kx-taskbar-h) 0;
+  z-index: 1;
+  overflow: hidden;
+}
+#kx-icons {
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+#kx-windows {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.kx-desktop-icon {
+  width: 88px;
+  padding: 6px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.kx-desktop-icon-label {
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 1px 1px 0 var(--kx-ink), -1px 1px 0 var(--kx-ink), 1px -1px 0 var(--kx-ink), -1px -1px 0 var(--kx-ink);
+}
+.kx-desktop-icon:hover { background: rgba(255, 255, 255, 0.18); }
+.kx-desktop-icon.selected { background: rgba(255, 255, 255, 0.3); border: 2px dashed #fff; }
+
+/* --------------------------------------------------------------------- windows */
+
+.kx-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  min-height: 120px;
+  background: var(--kx-paper);
+  border: 3px solid var(--kx-ink);
+  box-shadow: var(--kx-shadow);
+  pointer-events: auto;
+  outline: none;
+}
+.kx-window.minimized { display: none; }
+.kx-window.maximized {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-shadow: none;
+  border-width: 0 0 3px 0;
+}
+.kx-window.dragging { user-select: none; }
+.kx-window.dragging .kx-win-body { pointer-events: none; }
+
+.kx-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 4px 0 8px;
+  background: var(--kx-inactive);
+  color: #fff;
+  border-bottom: 3px solid var(--kx-ink);
+  user-select: none;
+  touch-action: none;
+  cursor: default;
+}
+.kx-window.focused .kx-titlebar { background: var(--kx-accent); color: var(--kx-accent-ink); }
+.kx-title-icon { display: flex; }
+.kx-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.kx-controls { display: flex; gap: 4px; }
+.kx-ctl {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: var(--kx-paper-3);
+  color: var(--kx-ink);
+  border: 2px solid var(--kx-ink);
+  cursor: pointer;
+}
+.kx-ctl:hover { background: #fff; }
+.kx-ctl:active { transform: translate(1px, 1px); }
+.kx-ctl-close:hover { background: var(--kx-danger); color: #fff; }
+
+.kx-win-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.kx-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background: linear-gradient(135deg, transparent 0 50%, var(--kx-ink) 50% 58%, transparent 58% 70%, var(--kx-ink) 70% 78%, transparent 78%);
+}
+.kx-window.maximized .kx-resize { display: none; }
+
+/* --------------------------------------------------------------------- buttons */
+
+.kx-btn {
+  padding: 4px 14px;
+  background: var(--kx-paper-3);
+  border: 2px solid var(--kx-ink);
+  box-shadow: 2px 2px 0 var(--kx-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.kx-btn:hover { background: #fff; }
+.kx-btn:active { transform: translate(2px, 2px); box-shadow: none; }
+.kx-btn:disabled { opacity: 0.45; cursor: default; box-shadow: none; transform: none; }
+.kx-btn.primary { background: var(--kx-accent); color: var(--kx-accent-ink); }
+.kx-btn.danger { background: var(--kx-danger); color: #fff; }
+
+.kx-input {
+  width: 100%;
+  padding: 5px 8px;
+  background: #fff;
+  border: 2px solid var(--kx-ink);
+  font: inherit;
+  color: var(--kx-ink);
+}
+
+.kx-statusbar {
+  display: flex;
+  gap: 16px;
+  padding: 3px 8px;
+  background: var(--kx-paper-2);
+  border-top: 2px solid var(--kx-ink);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.kx-statusbar span:last-child { margin-left: auto; }
+
+/* --------------------------------------------------------------------- taskbar */
+
+#kx-taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--kx-taskbar-h);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+  background: var(--kx-ink);
+  border-top: 3px solid #0b1530;
+}
+#kx-start-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px 0 8px;
+  background: var(--kx-grass);
+  color: #0b1530;
+  border: 2px solid #0b1530;
+  box-shadow: 2px 2px 0 #0b1530, inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+#kx-start-button:hover { background: #5cc060; }
+#kx-start-button.active, #kx-start-button:active { transform: translate(2px, 2px); box-shadow: none; }
+
+#kx-task-buttons {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  overflow: hidden;
+}
+.kx-task {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 170px;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--kx-paper);
+  border: 2px solid #0b1530;
+  cursor: pointer;
+  overflow: hidden;
+}
+.kx-task:hover { background: #fff; }
+.kx-task.active { background: var(--kx-accent); color: var(--kx-accent-ink); font-weight: 700; }
+.kx-task.minimized { opacity: 0.65; font-style: italic; }
+.kx-task-icon { display: flex; }
+.kx-task-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+#kx-tray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 8px;
+  background: #0f1f3d;
+  border: 2px solid #0b1530;
+  color: #e8f1ff;
+}
+#kx-fullscreen-button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  color: #e8f1ff;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+#kx-fullscreen-button:hover { border-color: #e8f1ff; }
+#kx-fullscreen-button.active { background: var(--kx-accent); color: var(--kx-accent-ink); }
+#kx-clock { min-width: 52px; text-align: center; font-family: var(--kx-mono); font-weight: 700; font-size: 15px; }
+
+/* ----------------------------------------------------------------- start menu */
+
+#kx-start-menu {
+  position: fixed;
+  left: 6px;
+  bottom: calc(var(--kx-taskbar-h) + 4px);
+  z-index: 101;
+  display: flex;
+  width: 270px;
+  background: var(--kx-paper);
+  border: 3px solid var(--kx-ink);
+  box-shadow: var(--kx-shadow);
+}
+.kx-start-band {
+  flex: none;
+  width: 38px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 8px 0;
+  background: linear-gradient(to bottom, #3d9be9, #8fd0ff 55%, #58b94f 56%);
+  border-right: 3px solid var(--kx-ink);
+}
+.kx-start-band span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--kx-ink);
+}
+#kx-start-list { flex: 1; margin: 0; padding: 4px; list-style: none; }
+.kx-start-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: 2px solid transparent;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.kx-start-item:hover, .kx-start-item:focus-visible {
+  background: var(--kx-accent);
+  color: var(--kx-accent-ink);
+  border-color: var(--kx-ink);
+  outline: none;
+}
+.kx-start-icon { display: grid; place-items: center; width: 26px; height: 26px; }
+.kx-start-glyph { font-size: 20px; line-height: 1; }
+.kx-start-sep { height: 3px; margin: 6px 4px; background: var(--kx-ink); opacity: 0.25; }
+
+/* --------------------------------------------------------------------- dialogs */
+
+#kx-modal-layer { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
+.kx-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(10, 20, 40, 0.4);
+  pointer-events: auto;
+}
+.kx-dialog {
+  max-width: 100%;
+  background: var(--kx-paper);
+  border: 3px solid var(--kx-ink);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+}
+.kx-dialog-title {
+  padding: 6px 10px;
+  background: var(--kx-accent);
+  color: var(--kx-accent-ink);
+  border-bottom: 3px solid var(--kx-ink);
+  font-weight: 700;
+}
+.kx-dialog-body { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
+.kx-dialog-msg { margin: 0; white-space: pre-wrap; line-height: 1.4; }
+.kx-dialog-error { min-height: 1.2em; color: var(--kx-danger); font-weight: 700; font-size: 13px; }
+.kx-dialog-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+
+.kx-fd-path { padding: 4px 8px; background: var(--kx-paper-2); border: 2px solid var(--kx-ink); font-family: var(--kx-mono); }
+.kx-fd-list { height: 220px; overflow: auto; background: #fff; border: 2px solid var(--kx-ink); }
+.kx-fd-row { display: flex; align-items: center; gap: 8px; padding: 3px 8px; cursor: default; user-select: none; }
+.kx-fd-row:hover { background: #e9f3ff; }
+.kx-fd-row.selected { background: var(--kx-accent); color: var(--kx-accent-ink); }
+.kx-fd-empty { padding: 12px; opacity: 0.6; }
+.kx-fd-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.kx-fd-name span { flex: none; }
+
+/* -------------------------------------------------------------------- menu bar */
+
+.kx-menubar { display: flex; flex: none; background: var(--kx-paper-2); border-bottom: 2px solid var(--kx-ink); position: relative; z-index: 5; }
+.kx-menu-wrap { position: relative; }
+.kx-menu-top { padding: 4px 12px; background: transparent; border: 0; cursor: pointer; }
+.kx-menu-top:hover, .kx-menu-top.open { background: var(--kx-accent); color: var(--kx-accent-ink); }
+.kx-menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  min-width: 190px;
+  background: var(--kx-paper-3);
+  border: 2px solid var(--kx-ink);
+  box-shadow: 3px 3px 0 rgba(27, 42, 73, 0.45);
+}
+.kx-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 10px 5px 4px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.kx-menu-item:hover:not(:disabled) { background: var(--kx-accent); color: var(--kx-accent-ink); }
+.kx-menu-item:disabled { opacity: 0.45; cursor: default; }
+.kx-menu-check { width: 16px; text-align: center; font-weight: 900; }
+.kx-menu-label { flex: 1; }
+.kx-menu-key { margin-left: 18px; opacity: 0.7; font-size: 12px; }
+.kx-menu-sep { height: 2px; margin: 3px 0; background: var(--kx-ink); opacity: 0.25; }
+
+/* --------------------------------------------------------------------- Notepad */
+
+.kx-np { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.kx-np-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 8px;
+  resize: none;
+  border: 0;
+  background: #fffef8;
+  color: var(--kx-ink);
+  font-family: var(--kx-mono);
+  font-size: 15px;
+  line-height: 1.4;
+  tab-size: 4;
+}
+.kx-np-area:focus-visible { outline: none; }
+.kx-np-area.nowrap { white-space: pre; overflow-wrap: normal; overflow: auto; }
+
+/* ------------------------------------------------------------------ Calculator */
+
+.kx-calc { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px; background: var(--kx-paper-2); outline: none; }
+.kx-calc-screen { padding: 6px 10px; background: #9fe6a8; border: 3px solid var(--kx-ink); text-align: right; font-family: var(--kx-mono); }
+.kx-calc-expr { min-height: 1.3em; font-size: 13px; opacity: 0.75; overflow: hidden; white-space: nowrap; }
+.kx-calc-display { font-size: 30px; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.kx-calc-keys { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 6px; }
+.kx-calc-key { padding: 0; font-size: 20px; font-weight: 700; background: var(--kx-paper-3); border: 2px solid var(--kx-ink); box-shadow: 2px 2px 0 var(--kx-ink); cursor: pointer; }
+.kx-calc-key:hover { background: #fff; }
+.kx-calc-key:active { transform: translate(2px, 2px); box-shadow: none; }
+.kx-calc-key.fn { background: var(--kx-paper); }
+.kx-calc-key.op { background: #ffd45e; }
+.kx-calc-key.eq { background: var(--kx-accent); color: var(--kx-accent-ink); }
+
+/* -------------------------------------------------------------------- Settings */
+
+.kx-settings { flex: 1; min-height: 0; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.kx-set-section { padding: 10px 12px 12px; background: var(--kx-paper-3); border: 2px solid var(--kx-ink); }
+.kx-set-title { margin: 0 0 8px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.kx-set-note { margin: 6px 0 0; font-size: 12px; opacity: 0.75; }
+.kx-wp-grid, .kx-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.kx-wp-choice { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; background: transparent; border: 2px solid transparent; cursor: pointer; font-weight: 700; }
+.kx-wp-choice:hover { background: var(--kx-paper-2); }
+.kx-wp-choice.selected { border-color: var(--kx-ink); background: var(--kx-paper-2); }
+.kx-wp-thumb { position: relative; width: 100px; height: 64px; overflow: hidden; border: 2px solid var(--kx-ink); }
+.kx-wp-inner { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; transform: scale(0.075); transform-origin: 0 0; }
+.kx-swatch { width: 34px; height: 34px; padding: 0; border: 3px solid var(--kx-ink); cursor: pointer; }
+.kx-swatch.selected { outline: 3px solid var(--kx-ink); outline-offset: 2px; }
+.kx-set-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kx-set-row input[type="color"] { width: 44px; height: 34px; padding: 0; border: 3px solid var(--kx-ink); background: #fff; cursor: pointer; }
+.kx-set-row label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; }
+.kx-set-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--kx-accent); }
+
+/* ----------------------------------------------------------------------- Files */
+
+.kx-files { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.kx-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; background: var(--kx-paper-2); border-bottom: 2px solid var(--kx-ink); }
+.kx-toolbar .kx-btn { padding: 2px 10px; }
+.kx-files-path { flex: 1 1 90px; min-width: 80px; padding: 3px 8px; background: #fff; border: 2px solid var(--kx-ink); font: 13px var(--kx-mono); color: var(--kx-ink); }
+.kx-files-head, .kx-files-row { display: grid; grid-template-columns: minmax(120px, 1fr) 80px 150px; gap: 8px; align-items: center; padding: 3px 10px; }
+.kx-files-head { flex: none; background: var(--kx-paper-2); border-bottom: 2px solid var(--kx-ink); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.kx-files-list { flex: 1; min-height: 0; overflow: auto; background: #fff; }
+.kx-files-row { cursor: default; user-select: none; }
+.kx-files-row:hover { background: #e9f3ff; }
+.kx-files-row.selected { background: var(--kx-accent); color: var(--kx-accent-ink); }
+.kx-files-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.kx-files-name span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.kx-files-empty { padding: 20px; text-align: center; opacity: 0.6; }
+
+/* -------------------------------------------------------------------- Terminal */
+
+.kx-term {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 10px;
+  background: #0f1a2e;
+  color: #d7e7ff;
+  font-family: var(--kx-mono);
+  font-size: 14px;
+  line-height: 1.35;
+  cursor: text;
+}
+.kx-term-row { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.35em; }
+.kx-term-row.err { color: #ff8a80; }
+.kx-term-row.dim { color: #8fa5c8; }
+.kx-term-row.ok { color: #7cfc8a; }
+.kx-term-line { display: flex; gap: 8px; align-items: baseline; }
+.kx-term-prompt { flex: none; color: #7cfc8a; font-weight: 700; }
+.kx-term-input { flex: 1; min-width: 0; padding: 0; background: transparent; border: 0; color: #fff; font: inherit; caret-color: #7cfc8a; }
+.kx-term-input:focus-visible { outline: none; }
+
+/* -------------------------------------------------------------------- shutdown */
+
+#kx-shutdown {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #000;
+  color: #7cfc8a;
+  font-family: var(--kx-mono);
+  font-size: 18px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+}
+#kx-shutdown p { margin: 0; }
+#kx-shutdown .dim { color: #4d7a55; font-size: 14px; }
+
+/* ------------------------------------------------------------------ small screens */
+
+@media (max-width: 640px) {
+  :root { --kx-taskbar-h: 50px; }
+  #kx-start-menu { width: calc(100% - 12px); }
+  .kx-task { flex: 0 0 40px; }
+  .kx-task-label { display: none; }
+  .kx-files-head, .kx-files-row { grid-template-columns: minmax(100px, 1fr) 70px; }
+  .kx-files-head span:nth-child(3), .kx-files-row span:nth-child(3) { display: none; }
+  .kx-desktop-icon { width: 76px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

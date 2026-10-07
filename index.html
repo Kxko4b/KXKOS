@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b2a49">
+  <meta name="description" content="KXKOS is a retro desktop environment that runs entirely inside your browser.">
+  <title>KXKOS</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/kxkos.svg">
+  <link rel="stylesheet" href="src/ui/kxkos.css">
+</head>
+<body>
+  <!-- Desktop: wallpaper, icons, and the layer all app windows live in -->
+  <main id="kx-desktop" data-wallpaper="meadow">
+    <div id="kx-icons" role="group" aria-label="Desktop icons"></div>
+    <div id="kx-windows"></div>
+  </main>
+
+  <!-- Start menu (filled from the app registry) -->
+  <nav id="kx-start-menu" aria-label="Start menu" hidden>
+    <div class="kx-start-band"><span>KXKOS</span></div>
+    <ul id="kx-start-list"></ul>
+  </nav>
+
+  <!-- Taskbar -->
+  <div id="kx-taskbar">
+    <button id="kx-start-button" type="button" aria-haspopup="true" aria-expanded="false">
+      <img src="assets/icons/kxkos.svg" alt="" width="24" height="24"><span>KXKOS</span>
+    </button>
+    <div id="kx-task-buttons" role="toolbar" aria-label="Open windows"></div>
+    <div id="kx-tray">
+      <button id="kx-fullscreen-button" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <div id="kx-clock" aria-live="off"></div>
+    </div>
+  </div>
+
+  <!-- Dialogs are inserted here -->
+  <div id="kx-modal-layer" hidden></div>
+
+  <!-- Shown after "Shut down" -->
+  <div id="kx-shutdown" tabindex="0" hidden>
+    <p>KXKOS has shut down.</p>
+    <p class="dim">Click anywhere or press any key to power on.</p>
+  </div>
+
+  <noscript><p style="color:#fff;font:16px sans-serif;padding:24px">KXKOS needs JavaScript to run.</p></noscript>
+
+  <!-- Plain scripts, loaded in dependency order (no bundler, works from file://) -->
+  <script src="src/core/kxkos.js"></script>
+  <script src="src/ui/icons.js"></script>
+  <script src="src/core/filesystem.js"></script>
+  <script src="src/core/window-manager.js"></script>
+  <script src="src/ui/widgets.js"></script>
+  <script src="src/core/taskbar.js"></script>
+  <script src="src/core/desktop.js"></script>
+  <script src="src/apps/files/files.js"></script>
+  <script src="src/apps/notepad/notepad.js"></script>
+  <script src="src/apps/calculator/calculator.js"></script>
+  <script src="src/apps/terminal/terminal.js"></script>
+  <script src="src/apps/settings/settings.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
