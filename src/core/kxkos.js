@@ -122,12 +122,12 @@
 
   /* ----------------------------------------------------------------- settings */
 
-  KX.wallpapers = [
-    { id: 'meadow', name: 'Meadow' },
-    { id: 'dusk', name: 'Dusk' },
-    { id: 'night', name: 'Night' },
-    { id: 'teal', name: 'Teal' },
-  ];
+ KX.wallpapers = [
+  { id: 'bliss', name: 'Bliss' },
+  { id: 'dusk', name: 'Dusk' },
+  { id: 'night', name: 'Night' },
+  { id: 'teal', name: 'Teal' },
+];
 
   const DEFAULTS = { wallpaper: 'meadow', accent: '#3b8fe0', clock24: true };
 
