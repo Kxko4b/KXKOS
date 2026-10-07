@@ -56,13 +56,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
     linear-gradient(to bottom, transparent 0 68%, #58b94f 68% 100%),
     linear-gradient(to bottom, #3d9be9, #b5e2ff 68%);
 }
-
-[data-wallpaper="windows"] {
-  background-image: url("assets/wallpaper/windows-wallpaper.jpg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
 [data-wallpaper="dusk"] {
   background:
     radial-gradient(circle 52px at 78% 62%, #ffd07a 0 98%, transparent 100%),
@@ -595,4 +588,159 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
+}
+/* -------------------------------------------------------------------
+   KXEARCH + Bliss-style default wallpaper
+   ------------------------------------------------------------------- */
+
+[data-wallpaper="bliss"] {
+  /* KXKOS-generated recreation of the classic blue-sky/green-hill look.
+     It does not bundle Microsoft's original Bliss photograph. */
+  background:
+    radial-gradient(ellipse 150px 42px at 18% 19%, rgba(255,255,255,.96) 0 60%, transparent 61%),
+    radial-gradient(ellipse 120px 34px at 25% 22%, rgba(255,255,255,.9) 0 60%, transparent 61%),
+    radial-gradient(ellipse 120px 36px at 73% 16%, rgba(255,255,255,.9) 0 60%, transparent 61%),
+    radial-gradient(ellipse 85px 27px at 79% 19%, rgba(255,255,255,.82) 0 60%, transparent 61%),
+    radial-gradient(ellipse 105% 42% at 18% 105%, #6fae43 0 56%, transparent 57%),
+    radial-gradient(ellipse 100% 36% at 91% 104%, #4d9b3c 0 55%, transparent 56%),
+    linear-gradient(to bottom, transparent 0 66%, #72b84a 66% 100%),
+    linear-gradient(to bottom, #2f9be9 0%, #7ec7ef 58%, #d6efff 76%, #76b94d 76%, #4d9d3b 100%);
+}
+
+.kx-kxearch {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #e9edf5;
+}
+
+.kx-kxearch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  background: var(--kx-paper-2);
+  border-bottom: 2px solid var(--kx-ink);
+}
+
+.kx-kxearch-nav {
+  flex: none;
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  background: var(--kx-paper-3);
+  border: 2px solid var(--kx-ink);
+  box-shadow: 2px 2px 0 var(--kx-ink);
+  font-size: 20px;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.kx-kxearch-nav:hover {
+  background: #fff;
+}
+
+.kx-kxearch-nav:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.kx-kxearch-address {
+  flex: 1;
+  min-width: 80px;
+  height: 30px;
+  padding: 4px 9px;
+  background: #fff;
+  color: var(--kx-ink);
+  border: 2px solid var(--kx-ink);
+  font: 14px var(--kx-font);
+}
+
+.kx-kxearch-go,
+.kx-kxearch-external {
+  height: 30px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.kx-kxearch-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.kx-kxearch-quick-btn {
+  padding: 5px 12px;
+  background: var(--kx-paper-3);
+  border: 2px solid var(--kx-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kx-kxearch-quick-btn:hover {
+  background: var(--kx-accent);
+  color: var(--kx-accent-ink);
+}
+
+.kx-kxearch-welcome {
+  flex: none;
+  padding: 26px 18px;
+  text-align: center;
+  background: linear-gradient(#f8fbff, #e9edf5);
+  border-bottom: 2px solid var(--kx-ink);
+}
+
+.kx-kxearch-logo {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--kx-accent);
+  text-shadow: 2px 2px 0 var(--kx-ink);
+}
+
+.kx-kxearch-welcome p {
+  margin: 7px 0;
+}
+
+.kx-kxearch-welcome .dim {
+  opacity: .7;
+  font-size: 12px;
+}
+
+.kx-kxearch-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.kx-kxearch-status {
+  flex: none;
+  min-height: 24px;
+  padding: 3px 8px;
+  background: var(--kx-paper-2);
+  border-top: 2px solid var(--kx-ink);
+  font: 12px var(--kx-mono);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 700px) {
+  .kx-kxearch-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .kx-kxearch-address {
+    order: 2;
+    flex-basis: calc(100% - 48px);
+  }
+
+  .kx-kxearch-go,
+  .kx-kxearch-external {
+    order: 3;
+  }
 }

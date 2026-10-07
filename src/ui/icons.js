@@ -1,4 +1,4 @@
-/*
+﻿/*
  * KXKOS icons: small chunky SVGs on a 32x32 grid, drawn in the KXKOS palette.
  * KXKOS.icon(name, size) returns SVG markup (trusted, built-in) for use with el({ html }).
  */
@@ -42,6 +42,10 @@
       '<path d="M8 3h11l6 6v20H8z" fill="#ffffff" stroke="' + INK + '" stroke-width="2" stroke-linejoin="round"/>' +
       '<path d="M19 3v6h6" fill="none" stroke="' + INK + '" stroke-width="2" stroke-linejoin="round"/>' +
       '<path d="M11 15h11M11 19h11M11 23h7" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/>',
+
+    search:
+      '<circle cx="13.5" cy="13.5" r="8.5" fill="#fff" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M20 20l7 7" stroke="' + INK + '" stroke-width="3.5" stroke-linecap="round"/>',
   };
 
   /** SVG markup for a named icon at the given pixel size (default 32). */
@@ -55,3 +59,4 @@
     );
   };
 })();
+

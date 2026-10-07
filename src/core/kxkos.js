@@ -1,4 +1,4 @@
-/*
+﻿/*
  * KXKOS core: global namespace, event bus, DOM helper, storage, settings and the app registry.
  *
  * KXKOS uses plain <script> tags (no bundler, no ES modules) so index.html also works when it is
@@ -122,14 +122,14 @@
 
   /* ----------------------------------------------------------------- settings */
 
- KX.wallpapers = [
-  { id: 'windows', name: 'Windows Wallpaper' },
-  { id: 'dusk', name: 'Dusk' },
-  { id: 'night', name: 'Night' },
-  { id: 'teal', name: 'Teal' },
-];
+  KX.wallpapers = [
+    { id: 'bliss', name: 'Bliss' },
+    { id: 'dusk', name: 'Dusk' },
+    { id: 'night', name: 'Night' },
+    { id: 'teal', name: 'Teal' },
+  ];
 
-const DEFAULTS = { wallpaper: 'windows', accent: '#3b8fe0', clock24: true };
+  const DEFAULTS = { wallpaper: 'bliss', accent: '#3b8fe0', clock24: true };
 
   function sanitize(input) {
     const out = Object.assign({}, DEFAULTS, input && typeof input === 'object' ? input : {});
@@ -214,3 +214,5 @@ const DEFAULTS = { wallpaper: 'windows', accent: '#3b8fe0', clock24: true };
   /** Open a virtual-filesystem file in whichever app handles it (Notepad for now). */
   KX.openFile = (path) => KX.openApp('notepad', { path });
 })();
+
+
