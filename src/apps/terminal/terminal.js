@@ -142,6 +142,18 @@
     },
   });
 
+   register('minesweeper', {
+    help: 'Open minesweeper, the KXKOS game',
+    run(ctx) {
+      if (KX.apps.minesweeper) {
+        KX.openApp('minesweeper');
+        ctx.print('Opening minesweeper…', 'ok');
+      } else {
+        ctx.print('minesweeper is not installed yet. It is planned for a later KXKOS release.', 'dim');
+      }
+    },
+  });
+
   register('kxearch', {
     help: 'Open KXEARCH, the KXKOS browser',
     run(ctx) {
