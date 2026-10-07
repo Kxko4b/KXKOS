@@ -123,13 +123,13 @@
   /* ----------------------------------------------------------------- settings */
 
  KX.wallpapers = [
-  { id: 'bliss', name: 'Bliss' },
+  { id: 'windows', name: 'Windows Wallpaper' },
   { id: 'dusk', name: 'Dusk' },
   { id: 'night', name: 'Night' },
   { id: 'teal', name: 'Teal' },
 ];
 
-  const DEFAULTS = { wallpaper: 'meadow', accent: '#3b8fe0', clock24: true };
+const DEFAULTS = { wallpaper: 'windows', accent: '#3b8fe0', clock24: true };
 
   function sanitize(input) {
     const out = Object.assign({}, DEFAULTS, input && typeof input === 'object' ? input : {});
