@@ -56,6 +56,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
     linear-gradient(to bottom, transparent 0 68%, #58b94f 68% 100%),
     linear-gradient(to bottom, #3d9be9, #b5e2ff 68%);
 }
+
+[data-wallpaper="windows"] {
+  background-image: url("../../assets/wallpaper/windows-wallpaper.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 [data-wallpaper="dusk"] {
   background:
     radial-gradient(circle 52px at 78% 62%, #ffd07a 0 98%, transparent 100%),
