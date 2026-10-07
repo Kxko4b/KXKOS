@@ -58,7 +58,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 }
 
 [data-wallpaper="windows"] {
-  background-image: url("../../assets/wallpaper/windows-wallpaper.jpg");
+  background-image: url("assets/wallpaper/windows-wallpaper.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
