@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Minesweeper is now a real KXKOS app (window, desktop icon, start menu entry): first click is always safe, right click or the flag toggle places flags
+- Fixed the default wallpaper: the image path was wrong, so the desktop rendered black
+- Fixed a stray `}` in `kxkos.css` that disabled the rules after it
+- Fixed `index.html` script tags (stray `` `r`n `` text, Minesweeper script missing)
+- Added `docs/development.md`
+
 ## 0.1.0
 
 First working version.
