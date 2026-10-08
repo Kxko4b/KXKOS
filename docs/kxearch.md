@@ -44,6 +44,9 @@ The players refuse to run when KXKOS is opened as a file (`file://`). Host it (G
 `https://<user>.github.io/<repo>/`) or run `python3 -m http.server` and open `http://localhost:8000`.
 The player bar above each video also offers "Via proxy" and "New tab" as fallbacks.
 
+YouTube/Google cookie banners: the proxy sends one fixed, non-personal consent cookie (`SOCS=CAI`) to those sites so the banner does not
+reappear in a loop. Nothing from the user's browser is ever forwarded as a cookie.
+
 ### Limits
 
 - Scripts that call `fetch`/`XMLHttpRequest` with relative URLs go to the proxy origin and usually fail; sites that need logins, DRM or heavy JS apps may not work.

@@ -148,6 +148,21 @@
     return null;
   }
 
+  const TWITCH_RESERVED = new Set([
+    'directory', 'search', 'downloads', 'jobs', 'p', 'settings', 'login', 'signup', 'turbo',
+    'store', 'prime', 'friends', 'subscriptions', 'wallet', 'drops', 'inventory', 'u', 'user',
+    'moderator', 'dashboard', 'popout', 'embed', 'team', 'broadcast', 'messages', 'payments'
+  ]);
+
+  function isTwitchHost(url) {
+    try {
+      const h = new URL(url).hostname.toLowerCase();
+      return h === 'twitch.tv' || h.endsWith('.twitch.tv');
+    } catch {
+      return false;
+    }
+  }
+
   function twitchInfo(url) {
     try {
       const u = new URL(url);
@@ -159,6 +174,10 @@
       const parts = u.pathname.split('/').filter(Boolean);
 
       if (!parts.length) {
+        return null;
+      }
+
+      if (TWITCH_RESERVED.has(parts[0].toLowerCase())) {
         return null;
       }
 
@@ -453,6 +472,33 @@
         setStatus(tab, 'YouTube');
       }
 
+      function renderTwitchHome(tab) {
+        const container = KX.el('div', { class: 'kx-kxearch-search-container' });
+        const hero = KX.el('div', { class: 'kx-kxearch-newtab' });
+        const { form } = searchForm(tab, '', true, 'Channel name, e.g. shroud');
+        const fresh = form.cloneNode(true);
+        const field = fresh.querySelector('input');
+        fresh.querySelector('button').textContent = 'Watch';
+        fresh.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = field.value.trim().replace(/^@/, '').replace(/[^A-Za-z0-9_]/g, '');
+          if (name) go(tab, 'https://www.twitch.tv/' + name);
+        });
+        hero.append(
+          KX.el('div', { class: 'kx-kxearch-search-logo', text: 'Twitch' }),
+          fresh,
+          KX.el('p', {
+            class: 'kx-kxearch-search-hint',
+            text: 'Type a channel name to watch the stream in the built-in player. Browsing Twitch and signing in are not possible inside KXEARCH.'
+          }),
+          externalButton('https://www.twitch.tv/', 'Open twitch.tv in a normal tab')
+        );
+        container.appendChild(hero);
+        setPane(tab, container);
+        setTitle(tab, 'Twitch');
+        setStatus(tab, 'Twitch');
+      }
+
       function resultTabs(tab, query, type) {
         const row = KX.el('div', { class: 'kx-kxearch-result-tabs' });
         [['all', 'All', SEARCH_PREFIX], ['images', 'Images', IMAGES_PREFIX]].forEach(([id, label, prefix]) => {
@@ -656,6 +702,11 @@
           }
           setPane(tab, embedView(tab, src, 'Twitch', url));
           setStatus(tab, 'Twitch');
+          return;
+        }
+
+        if (isTwitchHost(url) && !twitch) {
+          renderTwitchHome(tab);
           return;
         }
 

@@ -246,12 +246,12 @@ function authNoticeResponse(url) {
 // A proxied page's script navigated to a bare path such as /foo (or the frame
 // was reloaded). The page's shim stored the real site in window.name, so work
 // out the full address from that and bounce back through the proxy.
-function recoveryPage() {
+function recoveryPage(isRoot) {
   const html = '<!doctype html><meta charset="utf-8"><title>KXEARCH</title>' +
     '<body style="font:16px system-ui,sans-serif;padding:24px;color:#1b2a49"><p id="m">Loading…</p><script>' +
     '(function(){var n=window.name||"";if(n.indexOf("kxbase:")===0){try{var t=new URL(location.pathname+location.search+location.hash,n.slice(7)).href;' +
     'location.replace("/?url="+encodeURIComponent(t));return;}catch(e){}}' +
-    'document.getElementById("m").textContent="This page was reloaded outside KXEARCH. Use the refresh button inside KXEARCH, or search again.";})();' +
+    'document.getElementById("m").textContent=' + JSON.stringify(isRoot ? 'KXEARCH Proxy is running.' : 'This page was reloaded outside KXEARCH. Use the refresh button inside KXEARCH, or search again.') + ';})();' +
     '</script></body>';
   return new Response(html, {
     status: 200,
@@ -334,7 +334,7 @@ function buildShim(workerOrigin, baseHref) {
           var out = [];
           for (var i = 0; i < real.length; i++) {
             var k = real.key(i);
-            if (k && k.indexOf(PFX) === 0) out.push(k.slice(PFX.length));
+            if (k && k.indexOf(PFX) === 0 && k !== PFX + '__kxjar') out.push(k.slice(PFX.length));
           }
           return out;
         };
@@ -360,11 +360,15 @@ function buildShim(workerOrigin, baseHref) {
           }
         });
       };
+      var rawLocal = realOf('localStorage');
       ['localStorage', 'sessionStorage'].forEach(function (name) {
-        var w = wrapStorage(realOf(name));
+        var w = wrapStorage(name === 'localStorage' ? rawLocal : realOf(name));
         try { Object.defineProperty(window, name, { configurable: true, get: function () { return w; } }); } catch (e) {}
       });
       var jar = {};
+      var JK = PFX + '__kxjar';
+      try { jar = JSON.parse(rawLocal.getItem(JK) || '{}') || {}; } catch (e) { jar = {}; }
+      var saveJar = function () { try { rawLocal.setItem(JK, JSON.stringify(jar)); } catch (e) {} };
       Object.defineProperty(Document.prototype, 'cookie', {
         configurable: true,
         get: function () { return Object.keys(jar).map(function (k) { return k + '=' + jar[k]; }).join('; '); },
@@ -373,6 +377,7 @@ function buildShim(workerOrigin, baseHref) {
           if (i < 0) return;
           var k = first.slice(0, i).trim(), v = first.slice(i + 1);
           if (/max-age=0|expires=[^;]*1970/i.test(s)) delete jar[k]; else jar[k] = v;
+          saveJar();
         }
       });
     } catch (e) {}
@@ -405,6 +410,20 @@ function buildShim(workerOrigin, baseHref) {
   }.toString() + ')(' + JSON.stringify(workerOrigin) + ',' + JSON.stringify(baseHref) + ');';
 }
 
+// Fixed, non-personal consent cookies so cookie-banner pages (YouTube/Google in
+// the EU) do not loop forever: the proxy keeps no cookies, so a click on
+// "Accept" can never be remembered. Nothing from the user is ever sent.
+const SITE_COOKIES = [
+  [/(^|\.)youtube\.com$/, 'SOCS=CAI'],
+  [/(^|\.)youtube-nocookie\.com$/, 'SOCS=CAI'],
+  [/(^|\.)google\.[a-z.]+$/, 'SOCS=CAI']
+];
+
+function siteCookie(host) {
+  for (const [re, value] of SITE_COOKIES) if (re.test(host)) return value;
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Proxy
 // ---------------------------------------------------------------------------
@@ -431,6 +450,9 @@ async function fetchFollowing(startUrl, request, selfHost, bodyBuf) {
     let res;
     try {
       headers.set('referer', url.origin + '/');
+      const consent = siteCookie(url.hostname.toLowerCase());
+      if (consent) headers.set('cookie', consent);
+      else headers.delete('cookie');
       if (method === 'POST') headers.set('origin', url.origin);
       res = await fetch(url.href, {
         method,
@@ -498,6 +520,8 @@ async function handleProxy(request, reqUrl) {
     if (reqUrl.pathname !== '/') {
       return recoveryPage();
     }
+    const dest = request.headers.get('sec-fetch-dest');
+    if (dest === 'iframe' || dest === 'document') return recoveryPage(true);
     return text(200, 'KXEARCH Proxy is running.');
   }
 

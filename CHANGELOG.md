@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Twitch start page (type a channel name, built-in player); Twitch directory/search paths no longer treated as channels
+- Worker: fixed consent cookie for YouTube/Google so cookie banners stop looping; page cookie jar persists per site; navigating to the worker root from a frame recovers the site instead of showing "Proxy is running". Must be redeployed
 - Worker: a page script navigating to a bare path (/foo) or a reloaded frame no longer shows "reloaded outside KXEARCH"; the worker recovers the real site (via window.name) and continues. Script-created external links are proxied too. Must be redeployed
 - Worker: Serper (Google results, no credit card) as an optional search provider via `SERPER_API_KEY`, plus a one-day cache for search answers. Must be redeployed
 - Fixed pages that failed with errors like GitHub's "What‽": proxied pages now get working per-site storage and a cookie jar instead of a locked-down sandbox; YouTube player bar gets a privacy-player option
