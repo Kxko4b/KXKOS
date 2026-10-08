@@ -10,7 +10,8 @@
  * that could reach internal / private resources is refused.
  *
  * Optional Worker settings (Cloudflare dashboard > Settings > Variables):
- *   BRAVE_API_KEY    (secret)  better search results via Brave Search API
+ *   SERPER_API_KEY   (secret)  Google results via serper.dev (2,500 free searches, no card)
+ *   BRAVE_API_KEY    (secret)  alternative: Brave Search API (needs a card)
  *   ALLOWED_ORIGINS  (text)    comma separated origins allowed to call /search,
  *                              e.g. "https://kxko4b.github.io". Default: any.
  *
@@ -734,6 +735,35 @@ async function searchImagesCommons(q) {
   }).filter((r) => r && r.image && r.thumb);
 }
 
+async function serperPost(path, key, q) {
+  const res = await fetch('https://google.serper.dev/' + path, {
+    method: 'POST',
+    headers: { 'x-api-key': key, 'content-type': 'application/json' },
+    body: JSON.stringify({ q, num: 20 })
+  });
+  if (!res.ok) throw new Error('serper ' + res.status);
+  return res.json();
+}
+
+async function searchSerper(q, key) {
+  const data = await serperPost('search', key, q);
+  return (data.organic || [])
+    .map((r) => ({ title: stripTags(r.title), url: publicHttpUrl(r.link), description: stripTags(r.snippet) }))
+    .filter((r) => r.url && r.title);
+}
+
+async function searchImagesSerper(q, key) {
+  const data = await serperPost('images', key, q);
+  return (data.images || [])
+    .map((r) => ({
+      title: stripTags(r.title),
+      image: publicHttpUrl(r.imageUrl),
+      thumb: publicHttpUrl(r.thumbnailUrl || r.imageUrl),
+      url: publicHttpUrl(r.link)
+    }))
+    .filter((r) => r.image && r.thumb);
+}
+
 async function handleSearch(request, reqUrl, env) {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   const origin = request.headers.get('origin');
@@ -751,20 +781,40 @@ async function handleSearch(request, reqUrl, env) {
 
   const attempts = [];
   if (reqUrl.searchParams.get('type') === 'images') {
+    if (env.SERPER_API_KEY) attempts.push(['serper', () => searchImagesSerper(q, env.SERPER_API_KEY)]);
     if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchImagesBrave(q, env.BRAVE_API_KEY)]);
     attempts.push(['duckduckgo', () => searchImagesDuckDuckGo(q)]);
     attempts.push(['wikimedia', () => searchImagesCommons(q)]);
-  } else if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchBrave(q, env.BRAVE_API_KEY)]);
+  } else {
+    if (env.SERPER_API_KEY) attempts.push(['serper', () => searchSerper(q, env.SERPER_API_KEY)]);
+    if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchBrave(q, env.BRAVE_API_KEY)]);
+  }
   if (reqUrl.searchParams.get('type') !== 'images') {
     attempts.push(['duckduckgo', () => searchDuckDuckGo(q)]);
     attempts.push(['wikipedia', () => searchWikipedia(q)]);
+  }
+
+  // Cache good answers for a day so a free API quota lasts longer.
+  const cacheKey = new Request('https://kxearch-cache.invalid/search?' + reqUrl.searchParams.toString());
+  const cache = typeof caches !== 'undefined' ? caches.default : null;
+  if (cache) {
+    try {
+      const hit = await cache.match(cacheKey);
+      if (hit) return json(await hit.json(), 200, Object.assign({ 'cache-control': 'public, max-age=300', 'x-kx-cache': 'hit' }, cors));
+    } catch {}
   }
 
   for (const [source, run] of attempts) {
     try {
       const results = (await run()).slice(0, 20);
       if (results.length) {
-        return json({ query: q, source, results }, 200, Object.assign({ 'cache-control': 'public, max-age=300' }, cors));
+        const payload = { query: q, source, results };
+        if (cache && source !== 'wikipedia' && source !== 'wikimedia') {
+          try {
+            await cache.put(cacheKey, new Response(JSON.stringify(payload), { headers: { 'cache-control': 'public, max-age=86400' } }));
+          } catch {}
+        }
+        return json(payload, 200, Object.assign({ 'cache-control': 'public, max-age=300' }, cors));
       }
     } catch {
       // try the next provider

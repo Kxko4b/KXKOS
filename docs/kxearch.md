@@ -52,10 +52,16 @@ The player bar above each video also offers "Via proxy" and "New tab" as fallbac
 
 ### Search providers
 
-Tried in order: Brave Search API (only if the secret `BRAVE_API_KEY` is set on the Worker), DuckDuckGo HTML, Wikipedia.
-DuckDuckGo may block Cloudflare IPs at times; add a Brave key for reliable results (free tier available).
+Tried in order: Serper (Google results, only if the secret `SERPER_API_KEY` is set), Brave (only if `BRAVE_API_KEY` is set),
+DuckDuckGo HTML, then Wikipedia. DuckDuckGo usually blocks Cloudflare's servers for web results, so without a key web search
+mostly falls back to Wikipedia (image search via DuckDuckGo does work). Good answers are cached for a day to save quota.
+
+**No credit card option:** sign up at serper.dev (2,500 free searches, no card required as of Oct 2026, one-time credit), copy the API key, then in Cloudflare:
+Workers & Pages > `kxearch-proxy` > Settings > Variables and Secrets > Add > type **Secret**, name `SERPER_API_KEY`, paste the key, Deploy.
+Check `https://<your-worker>/search?q=youtube`: the JSON should say `"source":"serper"`.
+
 Set `ALLOWED_ORIGINS` (e.g. `https://kxko4b.github.io`) to restrict who can call `/search`.
-Never put keys in frontend code.
+Never put keys in frontend code or in the repo.
 
 ## Testing
 

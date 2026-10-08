@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Worker: Serper (Google results, no credit card) as an optional search provider via `SERPER_API_KEY`, plus a one-day cache for search answers. Must be redeployed
 - Fixed pages that failed with errors like GitHub's "What‽": proxied pages now get working per-site storage and a cookie jar instead of a locked-down sandbox; YouTube player bar gets a privacy-player option
 - KXEARCH: YouTube/Twitch player bar with Via proxy / New tab fallbacks and a file:// warning
 - Worker: POST support, site-as-referrer so hotlink-protected media loads
