@@ -1,6 +1,8 @@
 # KXEARCH
 
-Built-in browser. Type in the address bar:
+Built-in browser with tabs (+ button, middle-click closes), a bookmarks bar (☆ in the address bar, × on hover removes; stored in `localStorage`),
+and a new-tab page with a big search bar and bookmark tiles. Search results have **All** and **Images** tabs; click an image to open a larger view.
+Type in the address bar or the big search bar:
 
 - a web address (`https://x.com`, `example.com`) opens the page through the proxy
 - anything else (`youtube`, `best pizza near me`) shows a results page; click a result to open it
@@ -17,6 +19,7 @@ The URL is set as `PROXY` in `src/apps/kxearch/kxearch.js`.
 | --- | --- |
 | `/?url=<encoded url>` | fetch a public page and return it with links rewritten |
 | `/search?q=<query>` | JSON `{query, source, results:[{title,url,description}]}` |
+| `/search?type=images&q=<query>` | JSON image results `{title,image,thumb,url}` (Brave, DuckDuckGo, Wikimedia Commons) |
 
 ### Safety model (deny-list, not allow-list)
 
@@ -27,6 +30,13 @@ Cookies, `Authorization`, `Referer` and `Origin` are never forwarded; `Set-Cooki
 Only GET/HEAD, 15 s timeout, size limits (8 MB HTML, 40 MB other), best-effort rate limit per IP.
 Responses carry `Content-Security-Policy: sandbox ...` and the iframe is sandboxed without `allow-same-origin`,
 so proxied sites cannot read each other's storage.
+
+### Cookies and sign-in
+
+The proxy keeps no cookies on purpose: a proxy that stores logins would hold everyone's sessions and passwords.
+So sign-in does not work inside KXEARCH. Known sign-in hosts (Google, Microsoft, Apple, Twitch) show a notice with an
+"open in a normal tab" button. YouTube works for browsing and watching (search, then the built-in player), not for logging in.
+Pages' own `fetch`/XHR/dynamic resources are routed through the proxy by an injected script, so JS-heavy sites work better.
 
 ### Limits
 

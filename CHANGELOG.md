@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- KXEARCH: tabs, new-tab page with big search bar, bookmarks bar, image search with viewer, YouTube home/search page, sign-in notice instead of a blocked page
+- Worker: injected script routes page fetch/XHR/dynamic resources through the proxy, ports 8080/8443 allowed, image search endpoint. Must be redeployed
 - KXEARCH search: typing text in the address bar shows a results page (instant shortcuts for popular sites + web results), with back/forward support; iframes are sandboxed
 - Proxy worker rewritten: any public website works (deny-list instead of allow-list), SSRF protections, redirect re-checks, no cookie/referer forwarding, size/time limits, `/search` endpoint. Must be redeployed in Cloudflare
 - Added `docs/kxearch.md`

@@ -83,8 +83,8 @@ function validateTarget(raw, selfHost) {
   if (url.username || url.password) {
     throw new Refusal(400, 'URLs with credentials are not allowed.');
   }
-  if (url.port && url.port !== '80' && url.port !== '443') {
-    throw new Refusal(403, 'Only the standard web ports are allowed.');
+  if (url.port && !['80', '443', '8080', '8443'].includes(url.port)) {
+    throw new Refusal(403, 'Only common web ports are allowed.');
   }
 
   // The URL parser already normalises 2130706433, 0x7f.1, 017700000001 ...
@@ -204,6 +204,94 @@ document.addEventListener('submit', function (e) {
 }, true);
 `;
 
+// Sign-in pages. Passwords must never travel through a third-party proxy, and
+// these sites refuse embedded/proxied logins anyway (no cookies are kept), so
+// show a clear notice with a button to open the real site instead.
+const AUTH_HOSTS = [
+  'accounts.google.com', 'accounts.youtube.com', 'login.live.com',
+  'login.microsoftonline.com', 'appleid.apple.com', 'idmsa.apple.com',
+  'id.twitch.tv', 'passport.twitch.tv', 'www.facebook.com/login'
+];
+
+function isAuthPage(url) {
+  const host = url.hostname.toLowerCase();
+  return AUTH_HOSTS.some((h) => !h.includes('/') && (host === h)) ||
+    (host.endsWith('facebook.com') && /^\/(login|signup|recover)/.test(url.pathname));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function authNoticeResponse(url) {
+  const html = '<!doctype html><meta charset="utf-8"><title>Sign-in</title>' +
+    '<body style="font:16px system-ui,sans-serif;max-width:520px;margin:12vh auto;padding:0 20px;color:#1b2a49">' +
+    '<h2>Sign-in is not available inside KXEARCH</h2>' +
+    '<p>For your safety, passwords are never sent through the KXEARCH proxy, and ' + escapeHtml(url.hostname) +
+    ' does not allow logins inside embedded browsers.</p>' +
+    '<p><a target="_blank" rel="noopener noreferrer" href="' + escapeHtml(url.href) +
+    '" style="display:inline-block;padding:10px 16px;background:#3b8fe0;color:#fff;border:2px solid #1b2a49;text-decoration:none;font-weight:700">Open in a normal browser tab</a></p></body>';
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'content-security-policy': 'sandbox allow-popups allow-popups-to-escape-sandbox',
+      'x-content-type-options': 'nosniff'
+    }
+  });
+}
+
+// Runs inside proxied pages: sends the page's own fetch / XHR / dynamically
+// created resources through the proxy so JS-heavy sites keep working.
+function buildShim(workerOrigin, baseHref) {
+  return '(' + function (W, B) {
+    function prox(u) {
+      try {
+        if (u == null) return u;
+        var s = String(u);
+        if (/^(data|blob|javascript|about|mailto|tel):/i.test(s) || s.indexOf(W + '/') === 0) return u;
+        var a = new URL(s, B);
+        if (a.protocol !== 'http:' && a.protocol !== 'https:') return u;
+        if (a.origin === W) return u;
+        return W + '/?url=' + encodeURIComponent(a.href);
+      } catch (e) { return u; }
+    }
+    var of = window.fetch;
+    if (of) {
+      window.fetch = function (input, init) {
+        try {
+          init = Object.assign({}, init || {}, { credentials: 'omit' });
+          if (typeof input === 'string' || input instanceof URL) return of.call(this, prox(input), init);
+          if (input && input.url) return of.call(this, new Request(prox(input.url), input), init);
+        } catch (e) {}
+        return of.call(this, input, init);
+      };
+    }
+    var ox = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (m, u) {
+      var rest = Array.prototype.slice.call(arguments, 2);
+      return ox.apply(this, [m, prox(u)].concat(rest));
+    };
+    var osa = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function (n, v) {
+      var ln = String(n).toLowerCase();
+      if ((ln === 'src' || ln === 'href' || ln === 'action') && this.tagName !== 'A' && this.tagName !== 'FORM') v = prox(v);
+      return osa.call(this, n, v);
+    };
+    [[HTMLScriptElement, 'src'], [HTMLImageElement, 'src'], [HTMLIFrameElement, 'src'],
+     [HTMLLinkElement, 'href'], [HTMLSourceElement, 'src'], [HTMLMediaElement, 'src']].forEach(function (p) {
+      try {
+        var d = Object.getOwnPropertyDescriptor(p[0].prototype, p[1]);
+        if (d && d.set) Object.defineProperty(p[0].prototype, p[1], {
+          configurable: true, enumerable: d.enumerable, get: d.get,
+          set: function (v) { d.set.call(this, prox(v)); }
+        });
+      } catch (e) {}
+    });
+  }.toString() + ')(' + JSON.stringify(workerOrigin) + ',' + JSON.stringify(baseHref) + ');';
+}
+
 // ---------------------------------------------------------------------------
 // Proxy
 // ---------------------------------------------------------------------------
@@ -287,6 +375,8 @@ async function handleProxy(request, reqUrl) {
     throw err;
   }
 
+  if (isAuthPage(url)) return authNoticeResponse(url);
+
   let result;
   try {
     result = await fetchFollowing(url, request, reqUrl.hostname);
@@ -296,6 +386,7 @@ async function handleProxy(request, reqUrl) {
   }
 
   const { res, url: finalUrl } = result;
+  if (isAuthPage(finalUrl)) return authNoticeResponse(finalUrl);
   const type = res.headers.get('content-type') || '';
   const isHtml = /text\/html|application\/xhtml\+xml/i.test(type);
 
@@ -383,7 +474,11 @@ async function handleProxy(request, reqUrl) {
     })
     .on('head', {
       element(el) {
-        el.append('<script>' + FORM_SHIM.replace('__WORKER__', workerOrigin) + '</script>', { html: true });
+        // Prepend so the shim runs before any page script.
+        el.prepend(
+          '<script>' + buildShim(workerOrigin, base).replace(/<\/script/gi, '<\\/script') + FORM_SHIM.replace('__WORKER__', workerOrigin) + '</script>',
+          { html: true }
+        );
       }
     })
     .transform(
@@ -491,6 +586,62 @@ async function searchWikipedia(q) {
   })).filter((r) => r.url);
 }
 
+
+async function searchImagesBrave(q, key) {
+  const res = await fetch(
+    'https://api.search.brave.com/res/v1/images/search?count=40&q=' + encodeURIComponent(q),
+    { headers: { accept: 'application/json', 'x-subscription-token': key } }
+  );
+  if (!res.ok) throw new Error('brave images ' + res.status);
+  const data = await res.json();
+  return (data.results || []).map((r) => ({
+    title: stripTags(r.title),
+    image: publicHttpUrl((r.properties && r.properties.url) || (r.thumbnail && r.thumbnail.src)),
+    thumb: publicHttpUrl(r.thumbnail && r.thumbnail.src),
+    url: publicHttpUrl(r.url)
+  })).filter((r) => r.image && r.thumb);
+}
+
+async function searchImagesDuckDuckGo(q) {
+  const headers = { 'user-agent': USER_AGENT, 'accept-language': 'en-US,en;q=0.8' };
+  const page = await fetch('https://duckduckgo.com/?q=' + encodeURIComponent(q) + '&iax=images&ia=images', { headers });
+  const m = (await page.text()).match(/vqd=["']?([\d-]+)/);
+  if (!m) throw new Error('no vqd');
+  const res = await fetch(
+    'https://duckduckgo.com/i.js?l=us-en&o=json&f=,,,,,&p=1&q=' + encodeURIComponent(q) + '&vqd=' + m[1],
+    { headers: Object.assign({ referer: 'https://duckduckgo.com/' }, headers) }
+  );
+  if (!res.ok) throw new Error('ddg images ' + res.status);
+  const data = await res.json();
+  return (data.results || []).map((r) => ({
+    title: stripTags(r.title),
+    image: publicHttpUrl(r.image),
+    thumb: publicHttpUrl(r.thumbnail),
+    url: publicHttpUrl(r.url)
+  })).filter((r) => r.image && r.thumb);
+}
+
+async function searchImagesCommons(q) {
+  const res = await fetch(
+    'https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=30' +
+      '&prop=imageinfo&iiprop=url|mime&iiurlwidth=320&gsrsearch=' + encodeURIComponent(q),
+    { headers: { 'user-agent': USER_AGENT } }
+  );
+  if (!res.ok) throw new Error('commons ' + res.status);
+  const data = await res.json();
+  const pages = Object.values((data.query && data.query.pages) || {});
+  return pages.map((p) => {
+    const info = p.imageinfo && p.imageinfo[0];
+    if (!info || !/^image\//.test(info.mime || '')) return null;
+    return {
+      title: String(p.title || '').replace(/^File:/, '').replace(/\.\w+$/, ''),
+      image: publicHttpUrl(info.url),
+      thumb: publicHttpUrl(info.thumburl || info.url),
+      url: publicHttpUrl(info.descriptionurl)
+    };
+  }).filter((r) => r && r.image && r.thumb);
+}
+
 async function handleSearch(request, reqUrl, env) {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   const origin = request.headers.get('origin');
@@ -507,9 +658,15 @@ async function handleSearch(request, reqUrl, env) {
   if (!q) return json({ query: q, source: 'none', results: [] }, 200, cors);
 
   const attempts = [];
-  if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchBrave(q, env.BRAVE_API_KEY)]);
-  attempts.push(['duckduckgo', () => searchDuckDuckGo(q)]);
-  attempts.push(['wikipedia', () => searchWikipedia(q)]);
+  if (reqUrl.searchParams.get('type') === 'images') {
+    if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchImagesBrave(q, env.BRAVE_API_KEY)]);
+    attempts.push(['duckduckgo', () => searchImagesDuckDuckGo(q)]);
+    attempts.push(['wikimedia', () => searchImagesCommons(q)]);
+  } else if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchBrave(q, env.BRAVE_API_KEY)]);
+  if (reqUrl.searchParams.get('type') !== 'images') {
+    attempts.push(['duckduckgo', () => searchDuckDuckGo(q)]);
+    attempts.push(['wikipedia', () => searchWikipedia(q)]);
+  }
 
   for (const [source, run] of attempts) {
     try {
@@ -570,4 +727,4 @@ export default {
 };
 
 // Exported for tests.
-export { validateTarget, parseDuckDuckGo, Refusal };
+export { validateTarget, parseDuckDuckGo, buildShim, isAuthPage, Refusal };

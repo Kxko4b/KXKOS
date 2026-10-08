@@ -7,6 +7,78 @@
   const START_PAGE = '';
 
   const SEARCH_PREFIX = 'kxsearch:';
+  const IMAGES_PREFIX = 'kximages:';
+  const NEWTAB = 'kxnew:';
+  const YOUTUBE_HOME = 'kxyoutube:';
+  const BM_KEY = 'kxkos.kxearch.bookmarks';
+
+  const DEFAULT_BOOKMARKS = [
+    { title: 'YouTube', url: 'https://www.youtube.com/' },
+    { title: 'Wikipedia', url: 'https://www.wikipedia.org/' },
+    { title: 'GitHub', url: 'https://github.com/' },
+    { title: 'Twitch', url: 'https://www.twitch.tv/' },
+    { title: 'Reddit', url: 'https://www.reddit.com/' }
+  ];
+
+  const AUTH_HOSTS = [
+    'accounts.google.com', 'accounts.youtube.com', 'login.live.com',
+    'login.microsoftonline.com', 'appleid.apple.com', 'id.twitch.tv'
+  ];
+
+  function isAuthUrl(url) {
+    try {
+      return AUTH_HOSTS.includes(new URL(url).hostname.toLowerCase());
+    } catch {
+      return false;
+    }
+  }
+
+  function isYouTubeHome(url) {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.toLowerCase();
+      return (
+        (host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com') &&
+        (u.pathname === '/' || u.pathname === '')
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function youtubeSearchQuery(url) {
+    try {
+      const u = new URL(url);
+      if (u.hostname.toLowerCase().endsWith('youtube.com') && u.pathname === '/results') {
+        return u.searchParams.get('search_query');
+      }
+    } catch {}
+    return null;
+  }
+
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
+  }
+
+  function loadBookmarks() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(BM_KEY));
+      if (Array.isArray(raw)) {
+        return raw.filter((b) => b && typeof b.title === 'string' && isHttpUrl(b.url));
+      }
+    } catch {}
+    return DEFAULT_BOOKMARKS.slice();
+  }
+
+  function saveBookmarks(list) {
+    try {
+      localStorage.setItem(BM_KEY, JSON.stringify(list));
+    } catch {}
+  }
 
   // Instant results for well known names, shown above the web results (and
   // still shown if the search service cannot be reached).
@@ -137,8 +209,8 @@
     id: 'kxearch',
     title: 'KXEARCH',
     icon: 'search',
-    width: 900,
-    height: 600,
+    width: 960,
+    height: 640,
     minWidth: 560,
     minHeight: 380,
     singleton: true,
@@ -147,32 +219,19 @@
     order: 5,
 
     launch(win, args) {
-      const root = KX.el('div', {
-        class: 'kx-kxearch'
+      const root = KX.el('div', { class: 'kx-kxearch' });
+
+      // ---- tab strip ----------------------------------------------------
+      const tabStrip = KX.el('div', { class: 'kx-kxearch-tabs' });
+      const addTab = KX.el('button', {
+        class: 'kx-kxearch-tab-add', type: 'button', text: '+', title: 'New tab'
       });
 
-      const toolbar = KX.el('div', {
-        class: 'kx-kxearch-toolbar'
-      });
-
-      const back = KX.el('button', {
-        class: 'kx-kxearch-nav',
-        text: '‹',
-        title: 'Back'
-      });
-
-      const forward = KX.el('button', {
-        class: 'kx-kxearch-nav',
-        text: '›',
-        title: 'Forward'
-      });
-
-      const refresh = KX.el('button', {
-        class: 'kx-kxearch-nav',
-        text: '↻',
-        title: 'Refresh'
-      });
-
+      // ---- toolbar ------------------------------------------------------
+      const toolbar = KX.el('div', { class: 'kx-kxearch-toolbar' });
+      const back = KX.el('button', { class: 'kx-kxearch-nav', text: '‹', title: 'Back' });
+      const forward = KX.el('button', { class: 'kx-kxearch-nav', text: '›', title: 'Forward' });
+      const refresh = KX.el('button', { class: 'kx-kxearch-nav', text: '↻', title: 'Refresh' });
       const input = KX.el('input', {
         class: 'kx-kxearch-address',
         type: 'text',
@@ -180,375 +239,581 @@
         autocomplete: 'off',
         spellcheck: 'false'
       });
+      const star = KX.el('button', { class: 'kx-kxearch-nav kx-kxearch-star', text: '☆', title: 'Bookmark this page' });
+      const goBtn = KX.el('button', { class: 'kx-btn primary kx-kxearch-go', text: 'Go' });
+      toolbar.append(back, forward, refresh, input, star, goBtn);
 
-      const go = KX.el('button', {
-        class: 'kx-btn primary kx-kxearch-go',
-        text: 'Go'
-      });
+      const bar = KX.el('div', { class: 'kx-kxearch-bookmarks' });
+      const viewport = KX.el('div', { class: 'kx-kxearch-viewport' });
+      const status = KX.el('div', { class: 'kx-kxearch-status', text: 'Ready.' });
 
-      toolbar.append(back, forward, refresh, input, go);
+      // ---- state --------------------------------------------------------
+      let bookmarks = loadBookmarks();
+      const tabs = [];
+      let active = null;
+      let nextId = 1;
 
-      const viewport = KX.el('div', {
-        class: 'kx-kxearch-viewport'
-      });
-
-      const status = KX.el('div', {
-        class: 'kx-kxearch-status',
-        text: 'Ready.'
-      });
-
-      let current = '';
-      let history = [];
-      let historyIndex = -1;
-      let currentFrame = null;
-
-      function setViewport(node) {
-        viewport.replaceChildren(node);
-        currentFrame =
-          node.tagName === 'IFRAME'
-            ? node
-            : null;
+      function setStatus(tab, text) {
+        tab.status = text;
+        if (tab === active) status.textContent = text;
       }
 
-      function showNetflix(url) {
-        const page = KX.el('div', {
-          class: 'kx-kxearch-special-page'
-        });
-
-        const title = KX.el('div', {
-          class: 'kx-kxearch-special-title',
-          text: 'NETFLIX'
-        });
-
-        const text = KX.el('p', {
-          class: 'kx-kxearch-special-text',
-          text:
-            'Netflix does not provide a general embeddable web player. KXEARCH cannot reliably embed the Netflix application itself.'
-        });
-
-        const open = KX.el('button', {
-          class: 'kx-btn primary',
-          text: 'Open Netflix'
-        });
-
-        open.addEventListener('click', () => {
-          window.open(url, '_blank', 'noopener,noreferrer');
-        });
-
-        page.append(title, text, open);
-        setViewport(page);
+      function displayOf(entry) {
+        if (entry.startsWith(SEARCH_PREFIX)) return entry.slice(SEARCH_PREFIX.length);
+        if (entry.startsWith(IMAGES_PREFIX)) return entry.slice(IMAGES_PREFIX.length);
+        if (entry === NEWTAB) return '';
+        if (entry === YOUTUBE_HOME) return 'https://www.youtube.com/';
+        return entry;
       }
 
-      function show(url, addHistory = true) {
-        if (!isHttpUrl(url)) {
-          return;
+      function bookmarkUrl(entry) {
+        if (entry === YOUTUBE_HOME) return 'https://www.youtube.com/';
+        return isHttpUrl(entry) ? entry : null;
+      }
+
+      function isBookmarked(url) {
+        return bookmarks.some((b) => b.url === url);
+      }
+
+      function setTitle(tab, title) {
+        tab.title = title;
+        tab.label.textContent = title.length > 22 ? title.slice(0, 21) + '…' : title;
+        tab.el.title = title;
+      }
+
+      function syncUI() {
+        if (!active) return;
+        input.value = displayOf(active.current);
+        back.disabled = active.index <= 0;
+        forward.disabled = active.index + 1 >= active.history.length;
+        const url = bookmarkUrl(active.current);
+        star.textContent = url && isBookmarked(url) ? '★' : '☆';
+        star.disabled = !url;
+        status.textContent = active.status || '';
+      }
+
+      function renderBookmarks() {
+        bar.replaceChildren();
+        if (!bookmarks.length) {
+          bar.appendChild(KX.el('span', { class: 'kx-kxearch-bookmarks-empty', text: 'No bookmarks yet. Click ☆ to add one.' }));
         }
+        bookmarks.forEach((b) => {
+          const item = KX.el('span', { class: 'kx-kxearch-bookmark' });
+          const open = KX.el('button', { class: 'kx-kxearch-bookmark-open', type: 'button', text: b.title, title: b.url });
+          const del = KX.el('button', { class: 'kx-kxearch-bookmark-del', type: 'button', text: '×', title: 'Remove bookmark' });
+          open.addEventListener('click', (e) => {
+            if (e.ctrlKey || e.metaKey) newTab(b.url);
+            else go(active, b.url);
+          });
+          open.addEventListener('auxclick', (e) => {
+            if (e.button === 1) newTab(b.url);
+          });
+          del.addEventListener('click', () => {
+            bookmarks = bookmarks.filter((x) => x !== b);
+            saveBookmarks(bookmarks);
+            renderBookmarks();
+            refreshNewTabs();
+            syncUI();
+          });
+          item.append(open, del);
+          bar.appendChild(item);
+        });
+      }
 
-        current = url;
-        input.value = url;
+      function refreshNewTabs() {
+        tabs.forEach((t) => {
+          if (t.current === NEWTAB) render(t, NEWTAB);
+        });
+      }
 
-        if (addHistory) {
-          history = history.slice(0, historyIndex + 1);
-          history.push(url);
-          historyIndex = history.length - 1;
-        }
+      // ---- pane helpers ---------------------------------------------------
+      function setPane(tab, node) {
+        tab.pane.replaceChildren(node);
+        tab.frame = node.tagName === 'IFRAME' ? node : null;
+      }
 
-        // ---------------------------------------------------------------
-        // YouTube
-        // ---------------------------------------------------------------
+      function specialPage(title, message, buttons) {
+        const page = KX.el('div', { class: 'kx-kxearch-special-page' });
+        page.append(
+          KX.el('div', { class: 'kx-kxearch-special-title', text: title }),
+          KX.el('p', { class: 'kx-kxearch-special-text', text: message })
+        );
+        (buttons || []).forEach((b) => page.appendChild(b));
+        return page;
+      }
 
-        const yt = youtubeId(url);
+      function externalButton(url, label) {
+        const b = KX.el('button', { class: 'kx-btn primary', type: 'button', text: label });
+        b.addEventListener('click', () => window.open(url, '_blank', 'noopener,noreferrer'));
+        return b;
+      }
 
-        if (yt) {
-          const frame = mediaFrame(
-            'https://www.youtube.com/embed/' +
-              encodeURIComponent(yt) +
-              '?playsinline=1',
-            'YouTube'
+      function searchForm(tab, initial, big, placeholder) {
+        const form = KX.el('form', { class: 'kx-kxearch-searchform' + (big ? ' big' : '') });
+        const field = KX.el('input', {
+          class: 'kx-kxearch-bigsearch',
+          type: 'text',
+          value: initial || '',
+          placeholder: placeholder || 'Search the web',
+          autocomplete: 'off',
+          spellcheck: 'false'
+        });
+        const btn = KX.el('button', { class: 'kx-btn primary', type: 'submit', text: 'Search' });
+        form.append(field, btn);
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          submit(tab, field.value);
+        });
+        return { form, field };
+      }
+
+      // ---- pages: new tab, YouTube home, search, images ------------------
+      function renderNewTab(tab) {
+        const container = KX.el('div', { class: 'kx-kxearch-search-container' });
+        const hero = KX.el('div', { class: 'kx-kxearch-newtab' });
+        const { form, field } = searchForm(tab, '', true, 'Search KXEARCH or type a web address');
+        hero.append(KX.el('div', { class: 'kx-kxearch-search-logo', text: 'KXEARCH' }), form);
+
+        const tiles = KX.el('div', { class: 'kx-kxearch-tiles' });
+        bookmarks.slice(0, 10).forEach((b) => {
+          const tile = KX.el('button', { class: 'kx-kxearch-tile', type: 'button', title: b.url });
+          tile.append(
+            KX.el('span', { class: 'kx-kxearch-tile-icon', text: (b.title[0] || '?').toUpperCase() }),
+            KX.el('span', { class: 'kx-kxearch-tile-name', text: b.title })
           );
-
-          setViewport(frame);
-          status.textContent = 'YouTube video';
-          return;
-        }
-
-        // ---------------------------------------------------------------
-        // Twitch
-        // ---------------------------------------------------------------
-
-        const twitch = twitchInfo(url);
-
-        if (twitch) {
-          const parent =
-            location.hostname ||
-            'localhost';
-
-          let src =
-            'https://player.twitch.tv/?parent=' +
-            encodeURIComponent(parent) +
-            '&autoplay=false';
-
-          if (twitch.type === 'channel') {
-            src +=
-              '&channel=' +
-              encodeURIComponent(twitch.name);
-          }
-
-          if (twitch.type === 'video') {
-            src +=
-              '&video=' +
-              encodeURIComponent(twitch.id);
-          }
-
-          if (twitch.type === 'clip') {
-            src =
-              'https://clips.twitch.tv/embed?clip=' +
-              encodeURIComponent(twitch.id) +
-              '&parent=' +
-              encodeURIComponent(parent) +
-              '&autoplay=false';
-          }
-
-          const frame = mediaFrame(src, 'Twitch');
-
-          setViewport(frame);
-          status.textContent = 'Twitch';
-          return;
-        }
-
-        // ---------------------------------------------------------------
-        // Netflix
-        // ---------------------------------------------------------------
-
-        if (isNetflix(url)) {
-  const frame = KX.el('iframe', {
-    class: 'kx-kxearch-frame',
-    title: 'Netflix',
-    src: url,
-    allow:
-      'autoplay; encrypted-media; fullscreen; picture-in-picture',
-    allowfullscreen: true,
-    referrerpolicy: 'strict-origin-when-cross-origin'
-  });
-
-  setViewport(frame);
-  status.textContent = 'Netflix';
-  return;
-}
-
-        // ---------------------------------------------------------------
-        // Everything else -> KXEARCH proxy
-        // ---------------------------------------------------------------
-
-        const frame = KX.el('iframe', {
-          class: 'kx-kxearch-frame',
-          title: 'KXEARCH web view',
-          referrerpolicy: 'no-referrer',
-          // Opaque origin: proxied pages cannot share storage with each other.
-          sandbox:
-            'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
+          tile.addEventListener('click', () => go(tab, b.url));
+          tiles.appendChild(tile);
         });
-
-        frame.src = proxyUrl(url);
-
-        setViewport(frame);
-
-        status.textContent = 'Loading ' + url;
-
-        frame.addEventListener('load', () => {
-          if (current === url) {
-            status.textContent = 'Loaded: ' + url;
-          }
-        });
+        hero.appendChild(tiles);
+        container.appendChild(hero);
+        setPane(tab, container);
+        setTitle(tab, 'New Tab');
+        setStatus(tab, 'Ready — search or enter a web address.');
+        if (tab === active) setTimeout(() => field.focus(), 0);
       }
 
-      // -----------------------------------------------------------------
-      // Search results page
-      // -----------------------------------------------------------------
-
-      let searchToken = 0;
-
-      function pushHistory(entry) {
-        history = history.slice(0, historyIndex + 1);
-        history.push(entry);
-        historyIndex = history.length - 1;
+      function renderYouTube(tab) {
+        const container = KX.el('div', { class: 'kx-kxearch-search-container' });
+        const hero = KX.el('div', { class: 'kx-kxearch-newtab' });
+        const { form } = searchForm(tab, '', true, 'Search YouTube videos');
+        // Replace default submit with a YouTube-scoped search.
+        const fresh = form.cloneNode(true);
+        const field = fresh.querySelector('input');
+        fresh.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const q = field.value.trim();
+          if (q) go(tab, SEARCH_PREFIX + 'site:youtube.com/watch ' + q);
+        });
+        hero.append(
+          KX.el('div', { class: 'kx-kxearch-search-logo', text: 'YouTube' }),
+          fresh,
+          KX.el('p', {
+            class: 'kx-kxearch-search-hint',
+            text:
+              'Search for videos, then click one to watch it in the built-in player. Signing in to YouTube is not possible inside KXEARCH.'
+          }),
+          externalButton('https://www.youtube.com/', 'Open youtube.com in a normal tab')
+        );
+        container.appendChild(hero);
+        setPane(tab, container);
+        setTitle(tab, 'YouTube');
+        setStatus(tab, 'YouTube');
       }
 
-      function resultButton(result) {
-        const button = KX.el('button', {
-          class: 'kx-kxearch-result',
-          type: 'button',
-          title: result.url
+      function resultTabs(tab, query, type) {
+        const row = KX.el('div', { class: 'kx-kxearch-result-tabs' });
+        [['all', 'All', SEARCH_PREFIX], ['images', 'Images', IMAGES_PREFIX]].forEach(([id, label, prefix]) => {
+          const b = KX.el('button', {
+            class: 'kx-kxearch-result-tab' + (id === type ? ' active' : ''),
+            type: 'button',
+            text: label
+          });
+          b.addEventListener('click', () => {
+            if (id !== type) go(tab, prefix + query);
+          });
+          row.appendChild(b);
         });
+        return row;
+      }
 
+      function resultsShell(tab, query, type, note) {
+        const container = KX.el('div', { class: 'kx-kxearch-search-container' });
+        const page = KX.el('div', { class: 'kx-kxearch-search-page' });
+        const hero = KX.el('div', { class: 'kx-kxearch-search-hero compact' });
+        const { form } = searchForm(tab, query, false);
+        hero.append(
+          KX.el('div', { class: 'kx-kxearch-search-logo small', text: 'KXEARCH' }),
+          form,
+          resultTabs(tab, query, type),
+          KX.el('div', { class: 'kx-kxearch-search-hint', text: note })
+        );
+        page.appendChild(hero);
+        container.appendChild(page);
+        return { container, page };
+      }
+
+      function resultButton(tab, result) {
+        const button = KX.el('button', { class: 'kx-kxearch-result', type: 'button', title: result.url });
         button.append(
           KX.el('div', { class: 'kx-kxearch-result-title', text: result.title }),
           KX.el('div', { class: 'kx-kxearch-result-url', text: result.url }),
-          KX.el('div', {
-            class: 'kx-kxearch-result-description',
-            text: result.description || ''
-          })
+          KX.el('div', { class: 'kx-kxearch-result-description', text: result.description || '' })
         );
-
-        button.addEventListener('click', () => show(result.url));
+        button.addEventListener('click', () => go(tab, result.url));
         return button;
       }
 
-      function renderSearch(query, results, note) {
-        const container = KX.el('div', { class: 'kx-kxearch-search-container' });
-        const page = KX.el('div', { class: 'kx-kxearch-search-page' });
-
-        const hero = KX.el('div', { class: 'kx-kxearch-search-hero' });
-        hero.append(
-          KX.el('div', { class: 'kx-kxearch-search-logo', text: 'KXEARCH' }),
-          KX.el('div', { class: 'kx-kxearch-search-hint', text: note })
-        );
-
+      function drawResults(tab, query, results, note) {
+        const { container, page } = resultsShell(tab, query, 'all', note);
         const list = KX.el('div', { class: 'kx-kxearch-results' });
-
         if (results.length) {
-          results.forEach((r) => list.appendChild(resultButton(r)));
+          results.forEach((r) => list.appendChild(resultButton(tab, r)));
         } else {
-          list.appendChild(
-            KX.el('div', {
-              class: 'kx-kxearch-empty',
-              text: 'No results for “' + query + '”. Try different words or enter a web address.'
-            })
-          );
+          list.appendChild(KX.el('div', {
+            class: 'kx-kxearch-empty',
+            text: 'No results for “' + query + '”. Try different words or enter a web address.'
+          }));
         }
-
-        page.append(hero, list);
-        container.appendChild(page);
-        setViewport(container);
+        page.appendChild(list);
+        setPane(tab, container);
       }
 
-      async function showSearch(query, addHistory = true) {
-        const entry = SEARCH_PREFIX + query;
-        const token = ++searchToken;
-
-        current = entry;
-        input.value = query;
-
-        if (addHistory) {
-          pushHistory(entry);
-        }
-
+      async function doSearch(tab, query) {
+        const token = (tab.token = (tab.token || 0) + 1);
         const known = knownMatches(query);
-
-        renderSearch(query, known, 'Searching…');
-        status.textContent = 'Searching for “' + query + '”…';
+        setTitle(tab, query);
+        drawResults(tab, query, known, 'Searching…');
+        setStatus(tab, 'Searching for “' + query + '”…');
 
         let results = [];
         let failed = false;
-
         try {
           const res = await fetch(PROXY + 'search?q=' + encodeURIComponent(query));
-
-          if (!res.ok) {
-            throw new Error('HTTP ' + res.status);
-          }
-
+          if (!res.ok) throw new Error('HTTP ' + res.status);
           const data = await res.json();
           results = Array.isArray(data.results) ? data.results : [];
         } catch {
           failed = true;
         }
-
-        if (token !== searchToken || current !== entry) {
-          return; // the user moved on
-        }
+        if (tab.token !== token) return;
 
         const seen = new Set(known.map((k) => k.url));
-        const merged = known.concat(
-          results.filter((r) => r && isHttpUrl(r.url) && !seen.has(r.url))
+        const merged = known.concat(results.filter((r) => r && isHttpUrl(r.url) && !seen.has(r.url)));
+        drawResults(
+          tab, query, merged,
+          failed ? 'The search service could not be reached. Showing shortcuts only.' : 'Results for “' + query + '”'
         );
-
-        renderSearch(
-          query,
-          merged,
-          failed
-            ? 'The search service could not be reached. Showing shortcuts only.'
-            : 'Results for “' + query + '”'
-        );
-
-        status.textContent = failed
-          ? 'Search unavailable.'
-          : merged.length + ' result' + (merged.length === 1 ? '' : 's');
+        setStatus(tab, failed ? 'Search unavailable.' : merged.length + ' result' + (merged.length === 1 ? '' : 's'));
       }
 
-      function load(entry) {
-        if (entry.startsWith(SEARCH_PREFIX)) {
-          showSearch(entry.slice(SEARCH_PREFIX.length), false);
+      function proxied(url) {
+        return proxyUrl(url);
+      }
+
+      function lightbox(tab, pane, item) {
+        const box = KX.el('div', { class: 'kx-kxearch-lightbox' });
+        const img = KX.el('img', { class: 'kx-kxearch-lightbox-img', alt: item.title || '' });
+        img.src = proxied(item.image);
+        img.addEventListener('error', () => {
+          if (item.thumb && img.dataset.fell !== '1') {
+            img.dataset.fell = '1';
+            img.src = proxied(item.thumb);
+          }
+        });
+        const caption = KX.el('div', { class: 'kx-kxearch-lightbox-caption', text: item.title || '' });
+        const actions = KX.el('div', { class: 'kx-kxearch-lightbox-actions' });
+        const close = KX.el('button', { class: 'kx-btn', type: 'button', text: 'Close' });
+        close.addEventListener('click', () => box.remove());
+        actions.appendChild(close);
+        if (item.url) {
+          const visit = KX.el('button', { class: 'kx-btn primary', type: 'button', text: 'Visit page' });
+          visit.addEventListener('click', () => go(tab, item.url));
+          actions.appendChild(visit);
+        }
+        box.append(img, caption, actions);
+        box.addEventListener('click', (e) => {
+          if (e.target === box) box.remove();
+        });
+        pane.appendChild(box);
+      }
+
+      function drawImages(tab, query, items, note) {
+        const { container, page } = resultsShell(tab, query, 'images', note);
+        if (items.length) {
+          const grid = KX.el('div', { class: 'kx-kxearch-image-grid' });
+          items.forEach((item) => {
+            const cell = KX.el('button', { class: 'kx-kxearch-image-cell', type: 'button', title: item.title || '' });
+            const img = KX.el('img', { alt: item.title || '', loading: 'lazy' });
+            img.src = proxied(item.thumb);
+            cell.appendChild(img);
+            cell.addEventListener('click', () => lightbox(tab, tab.pane, item));
+            grid.appendChild(cell);
+          });
+          page.appendChild(grid);
         } else {
-          show(entry, false);
+          const box = KX.el('div', { class: 'kx-kxearch-results' });
+          box.appendChild(KX.el('div', {
+            class: 'kx-kxearch-empty',
+            text: 'No images found for “' + query + '”.'
+          }));
+          page.appendChild(box);
+        }
+        setPane(tab, container);
+      }
+
+      async function doImages(tab, query) {
+        const token = (tab.token = (tab.token || 0) + 1);
+        setTitle(tab, query + ' – Images');
+        drawImages(tab, query, [], 'Searching images…');
+        setStatus(tab, 'Searching images for “' + query + '”…');
+        let items = [];
+        let failed = false;
+        try {
+          const res = await fetch(PROXY + 'search?type=images&q=' + encodeURIComponent(query));
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          items = (Array.isArray(data.results) ? data.results : []).filter(
+            (r) => r && isHttpUrl(r.image) && isHttpUrl(r.thumb)
+          );
+        } catch {
+          failed = true;
+        }
+        if (tab.token !== token) return;
+        drawImages(
+          tab, query, items,
+          failed ? 'The image search could not be reached.' : 'Images for “' + query + '”'
+        );
+        setStatus(tab, failed ? 'Image search unavailable.' : items.length + ' images');
+      }
+
+      // ---- showing a website ---------------------------------------------
+      function show(tab, url) {
+        tab.token = (tab.token || 0) + 1;
+        setTitle(tab, hostOf(url));
+
+        const ytq = youtubeSearchQuery(url);
+        if (ytq) {
+          doSearch(tab, 'site:youtube.com/watch ' + ytq);
+          return;
+        }
+
+        if (isYouTubeHome(url)) {
+          tab.current = YOUTUBE_HOME;
+          renderYouTube(tab);
+          return;
+        }
+
+        const yt = youtubeId(url);
+        if (yt) {
+          setPane(tab, mediaFrame('https://www.youtube.com/embed/' + encodeURIComponent(yt) + '?playsinline=1', 'YouTube'));
+          setTitle(tab, 'YouTube video');
+          setStatus(tab, 'YouTube video');
+          return;
+        }
+
+        const twitch = twitchInfo(url);
+        if (twitch) {
+          const parent = location.hostname || 'localhost';
+          let src = 'https://player.twitch.tv/?parent=' + encodeURIComponent(parent) + '&autoplay=false';
+          if (twitch.type === 'channel') src += '&channel=' + encodeURIComponent(twitch.name);
+          if (twitch.type === 'video') src += '&video=' + encodeURIComponent(twitch.id);
+          if (twitch.type === 'clip') {
+            src = 'https://clips.twitch.tv/embed?clip=' + encodeURIComponent(twitch.id) +
+              '&parent=' + encodeURIComponent(parent) + '&autoplay=false';
+          }
+          setPane(tab, mediaFrame(src, 'Twitch'));
+          setStatus(tab, 'Twitch');
+          return;
+        }
+
+        if (isNetflix(url)) {
+          setPane(tab, specialPage(
+            'NETFLIX',
+            'Netflix does not allow being shown inside other apps, and sign-in is not possible in KXEARCH.',
+            [externalButton(url, 'Open Netflix')]
+          ));
+          setStatus(tab, 'Netflix');
+          return;
+        }
+
+        if (isAuthUrl(url)) {
+          setPane(tab, specialPage(
+            'Sign-in is not available here',
+            'Passwords are never sent through the KXEARCH proxy, and ' + hostOf(url) +
+              ' does not allow logins inside embedded browsers. Open it in a normal browser tab instead.',
+            [externalButton(url, 'Open in a normal tab')]
+          ));
+          setStatus(tab, 'Sign-in pages open outside KXEARCH.');
+          return;
+        }
+
+        const frame = KX.el('iframe', {
+          class: 'kx-kxearch-frame',
+          title: 'KXEARCH web view',
+          referrerpolicy: 'no-referrer',
+          sandbox: 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
+        });
+        frame.src = proxyUrl(url);
+        setPane(tab, frame);
+        setStatus(tab, 'Loading ' + url);
+        frame.addEventListener('load', () => {
+          if (tab.current === url) setStatus(tab, 'Loaded: ' + url);
+        });
+      }
+
+      function render(tab, entry) {
+        if (entry === NEWTAB) {
+          tab.token = (tab.token || 0) + 1;
+          renderNewTab(tab);
+        } else if (entry === YOUTUBE_HOME) {
+          tab.token = (tab.token || 0) + 1;
+          renderYouTube(tab);
+        } else if (entry.startsWith(SEARCH_PREFIX)) {
+          doSearch(tab, entry.slice(SEARCH_PREFIX.length));
+        } else if (entry.startsWith(IMAGES_PREFIX)) {
+          doImages(tab, entry.slice(IMAGES_PREFIX.length));
+        } else {
+          show(tab, entry);
         }
       }
 
-      function navigate() {
-        const raw = input.value.trim();
-
-        if (!raw) {
-          return;
+      function go(tab, entry, addHistory = true) {
+        if (addHistory) {
+          tab.history = tab.history.slice(0, tab.index + 1);
+          tab.history.push(entry);
+          tab.index = tab.history.length - 1;
         }
-
-        if (isHttpUrl(raw)) {
-          show(raw);
-          return;
-        }
-
-        // "example.com" or "example.com/path" (no spaces, a dot, a letter TLD)
-        if (/^[^\s/]+\.[a-z]{2,}(:\d+)?([/?#]\S*)?$/i.test(raw)) {
-          show('https://' + raw);
-          return;
-        }
-
-        showSearch(raw);
+        tab.current = entry;
+        render(tab, entry);
+        syncUI();
       }
 
-      go.addEventListener('click', navigate);
+      function toEntry(raw) {
+        if (isHttpUrl(raw)) return raw;
+        if (/^[^\s/]+\.[a-z]{2,}(:\d+)?([/?#]\S*)?$/i.test(raw)) return 'https://' + raw;
+        return SEARCH_PREFIX + raw;
+      }
 
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          navigate();
+      function submit(tab, raw) {
+        const value = (raw || '').trim();
+        if (!value) return;
+        go(tab, toEntry(value));
+      }
+
+      // ---- tabs -----------------------------------------------------------
+      function activate(tab) {
+        active = tab;
+        tabs.forEach((t) => {
+          const on = t === tab;
+          t.pane.hidden = !on;
+          t.el.classList.toggle('active', on);
+        });
+        syncUI();
+      }
+
+      function closeTab(tab) {
+        const i = tabs.indexOf(tab);
+        if (i < 0) return;
+        tabs.splice(i, 1);
+        tab.pane.remove();
+        tab.el.remove();
+        if (!tabs.length) {
+          newTab(NEWTAB);
+        } else if (active === tab) {
+          activate(tabs[Math.min(i, tabs.length - 1)]);
         }
+      }
+
+      function newTab(entry) {
+        const tab = {
+          id: nextId++,
+          history: [],
+          index: -1,
+          current: '',
+          title: 'New Tab',
+          status: '',
+          token: 0,
+          frame: null,
+          pane: KX.el('div', { class: 'kx-kxearch-pane' })
+        };
+        tab.label = KX.el('span', { class: 'kx-kxearch-tab-label', text: 'New Tab' });
+        const close = KX.el('span', { class: 'kx-kxearch-tab-close', text: '×', title: 'Close tab' });
+        tab.el = KX.el('button', { class: 'kx-kxearch-tab', type: 'button' });
+        tab.el.append(tab.label, close);
+        tab.el.addEventListener('click', () => activate(tab));
+        tab.el.addEventListener('auxclick', (e) => {
+          if (e.button === 1) closeTab(tab);
+        });
+        close.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeTab(tab);
+        });
+
+        tabs.push(tab);
+        tabStrip.insertBefore(tab.el, addTab);
+        viewport.appendChild(tab.pane);
+        activate(tab);
+        go(tab, entry);
+        return tab;
+      }
+
+      // ---- toolbar wiring -------------------------------------------------
+      addTab.addEventListener('click', () => newTab(NEWTAB));
+
+      function navigateFromBar() {
+        if (active) submit(active, input.value);
+      }
+
+      goBtn.addEventListener('click', navigateFromBar);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') navigateFromBar();
       });
+      input.addEventListener('focus', () => input.select());
 
       back.addEventListener('click', () => {
-        if (historyIndex > 0) {
-          historyIndex--;
-          load(history[historyIndex]);
+        if (active && active.index > 0) {
+          active.index--;
+          active.current = active.history[active.index];
+          render(active, active.current);
+          syncUI();
         }
       });
-
       forward.addEventListener('click', () => {
-        if (historyIndex + 1 < history.length) {
-          historyIndex++;
-          load(history[historyIndex]);
+        if (active && active.index + 1 < active.history.length) {
+          active.index++;
+          active.current = active.history[active.index];
+          render(active, active.current);
+          syncUI();
         }
       });
-
       refresh.addEventListener('click', () => {
-        if (!current) {
-          return;
+        if (active && active.current) {
+          render(active, active.current);
+          syncUI();
         }
-
-        load(current);
       });
 
-      root.append(
-        toolbar,
-        viewport,
-        status
-      );
+      star.addEventListener('click', () => {
+        if (!active) return;
+        const url = bookmarkUrl(active.current);
+        if (!url) return;
+        if (isBookmarked(url)) {
+          bookmarks = bookmarks.filter((b) => b.url !== url);
+        } else {
+          bookmarks.push({ title: active.title && active.title !== 'New Tab' ? active.title : hostOf(url), url });
+        }
+        saveBookmarks(bookmarks);
+        renderBookmarks();
+        refreshNewTabs();
+        syncUI();
+      });
 
+      tabStrip.appendChild(addTab);
+      root.append(tabStrip, toolbar, bar, viewport, status);
       win.body.appendChild(root);
+      renderBookmarks();
 
-      if (args && args.url) {
-  show(args.url);
-} else {
-  input.focus();
-  status.textContent = 'Ready — search or enter a web address.';
-}
+      newTab(args && args.url ? args.url : NEWTAB);
     }
   });
 })();
