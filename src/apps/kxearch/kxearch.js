@@ -342,6 +342,34 @@
         return page;
       }
 
+      // Player with a fallback bar: YouTube/Twitch sometimes refuse to play
+      // (for example when KXKOS is opened from a file), so offer alternatives.
+      function embedView(tab, src, title, pageUrl) {
+        const wrap = KX.el('div', { class: 'kx-kxearch-embed' });
+        const barEl = KX.el('div', { class: 'kx-kxearch-embed-bar' });
+        const frame = mediaFrame(src, title);
+        const note = KX.el('span', {
+          class: 'kx-kxearch-embed-note',
+          text: location.protocol === 'file:'
+            ? 'KXKOS is opened from a file (file://). ' + title + ' refuses to play there. Host KXKOS (GitHub Pages) or run python3 -m http.server.'
+            : 'Stuck on loading? Try the other options:'
+        });
+        const mk = (label, fn) => {
+          const b = KX.el('button', { class: 'kx-btn', type: 'button', text: label });
+          b.addEventListener('click', fn);
+          return b;
+        };
+        const player = mk('Player', () => { frame.src = src; });
+        const viaProxy = mk('Via proxy', () => {
+          frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads');
+          frame.src = proxyUrl(pageUrl);
+        });
+        const out = mk('New tab', () => window.open(pageUrl, '_blank', 'noopener,noreferrer'));
+        barEl.append(note, player, viaProxy, out);
+        wrap.append(barEl, frame);
+        return wrap;
+      }
+
       function externalButton(url, label) {
         const b = KX.el('button', { class: 'kx-btn primary', type: 'button', text: label });
         b.addEventListener('click', () => window.open(url, '_blank', 'noopener,noreferrer'));
@@ -605,7 +633,7 @@
 
         const yt = youtubeId(url);
         if (yt) {
-          setPane(tab, mediaFrame('https://www.youtube.com/embed/' + encodeURIComponent(yt) + '?playsinline=1', 'YouTube'));
+          setPane(tab, embedView(tab, 'https://www.youtube.com/embed/' + encodeURIComponent(yt) + '?playsinline=1&rel=0', 'YouTube', url));
           setTitle(tab, 'YouTube video');
           setStatus(tab, 'YouTube video');
           return;
@@ -621,7 +649,7 @@
             src = 'https://clips.twitch.tv/embed?clip=' + encodeURIComponent(twitch.id) +
               '&parent=' + encodeURIComponent(parent) + '&autoplay=false';
           }
-          setPane(tab, mediaFrame(src, 'Twitch'));
+          setPane(tab, embedView(tab, src, 'Twitch', url));
           setStatus(tab, 'Twitch');
           return;
         }

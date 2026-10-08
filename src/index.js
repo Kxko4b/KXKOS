@@ -296,8 +296,10 @@ function buildShim(workerOrigin, baseHref) {
 // Proxy
 // ---------------------------------------------------------------------------
 
-async function fetchFollowing(startUrl, request, selfHost) {
+async function fetchFollowing(startUrl, request, selfHost, bodyBuf) {
   let url = startUrl;
+  let method = request.method;
+  let body = bodyBuf;
   const headers = new Headers({
     'user-agent': USER_AGENT,
     accept: request.headers.get('accept') || '*/*',
@@ -305,15 +307,21 @@ async function fetchFollowing(startUrl, request, selfHost) {
   });
   const range = request.headers.get('range');
   if (range) headers.set('range', range);
-  // Deliberately NOT forwarded: Cookie, Authorization, Referer, Origin.
+  // Deliberately NOT forwarded: Cookie, Authorization and the CLIENT's Referer/Origin.
+  // Instead the site sees itself as referrer (many CDNs refuse hotlinking otherwise).
+  const ct = request.headers.get('content-type');
+  if (ct && body) headers.set('content-type', ct);
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     let res;
     try {
+      headers.set('referer', url.origin + '/');
+      if (method === 'POST') headers.set('origin', url.origin);
       res = await fetch(url.href, {
-        method: request.method,
+        method,
+        body: method === 'GET' || method === 'HEAD' ? undefined : body,
         headers,
         redirect: 'manual',
         signal: controller.signal
@@ -330,6 +338,11 @@ async function fetchFollowing(startUrl, request, selfHost) {
         next = new URL(res.headers.get('location'), url);
       } catch {
         throw new Refusal(502, 'Bad redirect from site.');
+      }
+      if (res.status === 303 || ((res.status === 301 || res.status === 302) && method === 'POST')) {
+        method = 'GET';
+        body = undefined;
+        headers.delete('content-type');
       }
       url = validateTarget(next.href, selfHost); // every hop is re-checked
       continue;
@@ -358,8 +371,13 @@ function buildHeaders(upstream, isHtml) {
 }
 
 async function handleProxy(request, reqUrl) {
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return text(405, 'Only GET and HEAD are supported.', { allow: 'GET, HEAD' });
+  if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
+    return text(405, 'Only GET, HEAD and POST are supported.', { allow: 'GET, HEAD, POST' });
+  }
+  let bodyBuf;
+  if (request.method === 'POST') {
+    bodyBuf = await request.arrayBuffer();
+    if (bodyBuf.byteLength > 1024 * 1024) return text(413, 'KXEARCH: request body too large.');
   }
 
   const target = reqUrl.searchParams.get('url');
@@ -379,7 +397,7 @@ async function handleProxy(request, reqUrl) {
 
   let result;
   try {
-    result = await fetchFollowing(url, request, reqUrl.hostname);
+    result = await fetchFollowing(url, request, reqUrl.hostname, bodyBuf);
   } catch (err) {
     if (err instanceof Refusal) return text(err.status, 'KXEARCH: ' + err.message);
     return text(502, 'KXEARCH: upstream error.');
@@ -704,7 +722,7 @@ export default {
         status: 204,
         headers: {
           'access-control-allow-origin': '*',
-          'access-control-allow-methods': 'GET, HEAD, OPTIONS',
+          'access-control-allow-methods': 'GET, HEAD, POST, OPTIONS',
           'access-control-allow-headers': '*',
           'access-control-max-age': '86400'
         }

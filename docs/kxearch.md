@@ -27,7 +27,7 @@ Any public website works. Refused: non-http(s) schemes, credentials in URLs, por
 private/loopback/link-local/reserved IPv4 (including `2130706433`, `0x7f.1` style tricks), single-label and
 internal hostnames (`.local`, `.internal`, ...), and the proxy itself. Every redirect hop is re-checked.
 Cookies, `Authorization`, `Referer` and `Origin` are never forwarded; `Set-Cookie` and upstream CSP/X-Frame-Options are dropped.
-Only GET/HEAD, 15 s timeout, size limits (8 MB HTML, 40 MB other), best-effort rate limit per IP.
+GET/HEAD/POST (POST bodies up to 1 MB; the site sees itself as referrer, never your address or cookies), 15 s timeout, size limits (8 MB HTML, 40 MB other), best-effort rate limit per IP.
 Responses carry `Content-Security-Policy: sandbox ...` and the iframe is sandboxed without `allow-same-origin`,
 so proxied sites cannot read each other's storage.
 
@@ -37,6 +37,12 @@ The proxy keeps no cookies on purpose: a proxy that stores logins would hold eve
 So sign-in does not work inside KXEARCH. Known sign-in hosts (Google, Microsoft, Apple, Twitch) show a notice with an
 "open in a normal tab" button. YouTube works for browsing and watching (search, then the built-in player), not for logging in.
 Pages' own `fetch`/XHR/dynamic resources are routed through the proxy by an injected script, so JS-heavy sites work better.
+
+### YouTube / Twitch not playing
+
+The players refuse to run when KXKOS is opened as a file (`file://`). Host it (GitHub Pages: repo Settings > Pages, then open
+`https://<user>.github.io/<repo>/`) or run `python3 -m http.server` and open `http://localhost:8000`.
+The player bar above each video also offers "Via proxy" and "New tab" as fallbacks.
 
 ### Limits
 
