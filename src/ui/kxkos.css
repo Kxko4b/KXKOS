@@ -1337,4 +1337,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-kxearch-embed { display: flex; flex-direction: column; width: 100%; height: 100%; flex: 1; }
 .kx-kxearch-embed-bar { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: #f1f4f9; border-bottom: 2px solid var(--kx-ink); font-size: 12px; }
 .kx-kxearch-embed-note { flex: 1; min-width: 0; }
-.kx-kxearch-embed > .kx-kxearch-frame { flex: 1; min-height: 0; width: 100%; border: 0; }
+.kx-kxearch-embed-row { flex: 1; min-height: 0; display: flex; }
+.kx-kxearch-embed-row > .kx-kxearch-frame { flex: 1; min-width: 0; height: 100%; border: 0; }
+.kx-kxearch-embed-chat { width: 340px; max-width: 45%; height: 100%; border: 0; border-left: 2px solid var(--kx-ink); }

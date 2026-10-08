@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- KXEARCH: Twitch chat panel (Chat button; Twitch's own login works inside it); hints on how YouTube/Twitch sign-in works with the embedded players
 - Twitch start page (type a channel name, built-in player); Twitch directory/search paths no longer treated as channels
 - Worker: fixed consent cookie for YouTube/Google so cookie banners stop looping; page cookie jar persists per site; navigating to the worker root from a frame recovers the site instead of showing "Proxy is running". Must be redeployed
 - Worker: a page script navigating to a bare path (/foo) or a reloaded frame no longer shows "reloaded outside KXEARCH"; the worker recovers the real site (via window.name) and continues. Script-created external links are proxied too. Must be redeployed

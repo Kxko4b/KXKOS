@@ -387,10 +387,31 @@
           ? mk('Privacy player', () => { frame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(youtubeId(pageUrl)) + '?playsinline=1'; })
           : null;
         const out = mk('New tab', () => window.open(pageUrl, '_blank', 'noopener,noreferrer'));
+        const row = KX.el('div', { class: 'kx-kxearch-embed-row' });
+        const tw = twitchInfo(pageUrl);
+        let chat = null;
+        const chatBtn = tw && tw.type === 'channel'
+          ? mk('Chat', () => {
+              if (chat) {
+                chat.remove();
+                chat = null;
+                return;
+              }
+              chat = KX.el('iframe', {
+                class: 'kx-kxearch-embed-chat',
+                title: 'Twitch chat',
+                src: 'https://www.twitch.tv/embed/' + encodeURIComponent(tw.name) + '/chat?parent=' + encodeURIComponent(location.hostname || 'localhost') + '&darkpopout',
+                referrerpolicy: 'strict-origin-when-cross-origin'
+              });
+              row.appendChild(chat);
+            })
+          : null;
         barEl.append(note, player);
+        if (chatBtn) barEl.appendChild(chatBtn);
         if (nocookie) barEl.appendChild(nocookie);
         barEl.append(viaProxy, out);
-        wrap.append(barEl, frame);
+        row.appendChild(frame);
+        wrap.append(barEl, row);
         return wrap;
       }
 
@@ -462,7 +483,7 @@
           KX.el('p', {
             class: 'kx-kxearch-search-hint',
             text:
-              'Search for videos, then click one to watch it in the built-in player. Signing in to YouTube is not possible inside KXEARCH.'
+              'Search for videos, then click one to watch it in the built-in player. KXEARCH cannot sign in for you, but the player uses your normal browser\'s YouTube login if you are signed in to youtube.com in another tab.'
           }),
           externalButton('https://www.youtube.com/', 'Open youtube.com in a normal tab')
         );
@@ -489,7 +510,7 @@
           fresh,
           KX.el('p', {
             class: 'kx-kxearch-search-hint',
-            text: 'Type a channel name to watch the stream in the built-in player. Browsing Twitch and signing in are not possible inside KXEARCH.'
+            text: 'Type a channel name to watch the stream in the built-in player. Browsing Twitch is not possible inside KXEARCH. To log in, open a channel and use Chat: its login runs on twitch.tv itself.'
           }),
           externalButton('https://www.twitch.tv/', 'Open twitch.tv in a normal tab')
         );
