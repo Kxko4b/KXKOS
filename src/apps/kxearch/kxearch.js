@@ -4,7 +4,7 @@
   const KX = window.KXKOS;
 
   const PROXY = 'https://kxearch-proxy.haleannson.workers.dev/';
-  const START_PAGE = 'https://kxko4b.github.io/custom-leverframe-diagrams/';
+  const START_PAGE = '';
 
   function isHttpUrl(value) {
     try {
@@ -289,10 +289,20 @@
         // ---------------------------------------------------------------
 
         if (isNetflix(url)) {
-          showNetflix(url);
-          status.textContent = 'Netflix';
-          return;
-        }
+  const frame = KX.el('iframe', {
+    class: 'kx-kxearch-frame',
+    title: 'Netflix',
+    src: url,
+    allow:
+      'autoplay; encrypted-media; fullscreen; picture-in-picture',
+    allowfullscreen: true,
+    referrerpolicy: 'strict-origin-when-cross-origin'
+  });
+
+  setViewport(frame);
+  status.textContent = 'Netflix';
+  return;
+}
 
         // ---------------------------------------------------------------
         // Everything else -> KXEARCH proxy
@@ -380,11 +390,12 @@
 
       win.body.appendChild(root);
 
-      show(
-        args && args.url
-          ? args.url
-          : START_PAGE
-      );
+      if (args && args.url) {
+  show(args.url);
+} else {
+  input.focus();
+  status.textContent = 'Ready — search or enter a web address.';
+}
     }
   });
 })();
