@@ -17,12 +17,14 @@ Finish each phase properly before starting the next.
 - [x] Files (virtual filesystem: browse, create, rename, delete)
 - [x] Terminal (`help clear about open settings kxearch` and more)
 
-## Phase 4: KXEARCH (next)
-- [ ] Browser chrome: address/search bar, back, forward, refresh, page area
-- [ ] Search results page
-- [ ] Shortcuts such as `youtube`, `twitch`, or a pasted URL
-- [ ] Handle iframe-blocking sites honestly (open externally / allowed embeds / proxy)
-- [ ] Backend (Supabase) only if needed; no secret keys in the frontend
+## Phase 4: KXEARCH
+- [x] Browser chrome: address/search bar, back, forward, refresh, page area
+- [x] Tabs, bookmarks bar, new-tab page with big search bar
+- [x] Search results page + image search
+- [x] Shortcuts such as `youtube`, `twitch`, or a pasted URL
+- [x] Handle iframe-blocking sites honestly (proxy worker, player fallbacks, open externally)
+- [x] Cloudflare Worker proxy (no Supabase needed so far); no secret keys in the frontend
+- [ ] Sign-in on proxied sites (not planned: the proxy keeps no cookies on purpose)
 
 ## Phase 5: Polish
 - [ ] Boot screen, startup/shutdown and UI sounds
