@@ -243,6 +243,27 @@ function authNoticeResponse(url) {
   });
 }
 
+// A proxied page's script navigated to a bare path such as /foo (or the frame
+// was reloaded). The page's shim stored the real site in window.name, so work
+// out the full address from that and bounce back through the proxy.
+function recoveryPage() {
+  const html = '<!doctype html><meta charset="utf-8"><title>KXEARCH</title>' +
+    '<body style="font:16px system-ui,sans-serif;padding:24px;color:#1b2a49"><p id="m">Loading…</p><script>' +
+    '(function(){var n=window.name||"";if(n.indexOf("kxbase:")===0){try{var t=new URL(location.pathname+location.search+location.hash,n.slice(7)).href;' +
+    'location.replace("/?url="+encodeURIComponent(t));return;}catch(e){}}' +
+    'document.getElementById("m").textContent="This page was reloaded outside KXEARCH. Use the refresh button inside KXEARCH, or search again.";})();' +
+    '</script></body>';
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'content-security-policy': 'sandbox allow-scripts allow-same-origin',
+      'x-content-type-options': 'nosniff'
+    }
+  });
+}
+
 // Runs inside proxied pages: sends the page's own fetch / XHR / dynamically
 // created resources through the proxy so JS-heavy sites keep working.
 function buildShim(workerOrigin, baseHref) {
@@ -356,6 +377,26 @@ function buildShim(workerOrigin, baseHref) {
       });
     } catch (e) {}
 
+    // Remember which site this frame shows (used if a script navigates to /foo).
+    try {
+      if (!window.name || window.name.indexOf('kxbase:') === 0) window.name = 'kxbase:' + B;
+    } catch (e) {}
+
+    // Links created by scripts with absolute external addresses.
+    document.addEventListener('click', function (e) {
+      try {
+        if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+        var a = e.target && e.target.closest && e.target.closest('a[href]');
+        if (!a) return;
+        var u = new URL(a.href);
+        if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === W) return;
+        e.preventDefault();
+        var go = prox(u.href);
+        if (a.target && a.target !== '_self' && a.target !== '_top' && a.target !== '_parent') window.open(go, a.target);
+        else location.href = go;
+      } catch (err) {}
+    }, true);
+
     // Let single-page apps that route on location.pathname see the real path.
     try {
       var real = new URL(B);
@@ -455,7 +496,7 @@ async function handleProxy(request, reqUrl) {
   const target = reqUrl.searchParams.get('url');
   if (!target) {
     if (reqUrl.pathname !== '/') {
-      return text(404, 'This page was reloaded outside KXEARCH. Use the refresh button inside KXEARCH instead.');
+      return recoveryPage();
     }
     return text(200, 'KXEARCH Proxy is running.');
   }

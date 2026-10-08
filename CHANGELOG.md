@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Worker: a page script navigating to a bare path (/foo) or a reloaded frame no longer shows "reloaded outside KXEARCH"; the worker recovers the real site (via window.name) and continues. Script-created external links are proxied too. Must be redeployed
 - Worker: Serper (Google results, no credit card) as an optional search provider via `SERPER_API_KEY`, plus a one-day cache for search answers. Must be redeployed
 - Fixed pages that failed with errors like GitHub's "What‽": proxied pages now get working per-site storage and a cookie jar instead of a locked-down sandbox; YouTube player bar gets a privacy-player option
 - KXEARCH: YouTube/Twitch player bar with Via proxy / New tab fallbacks and a file:// warning
