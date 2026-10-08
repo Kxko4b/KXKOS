@@ -8,6 +8,7 @@
 
   const SEARCH_PREFIX = 'kxsearch:';
   const IMAGES_PREFIX = 'kximages:';
+  const VIDEOS_PREFIX = 'kxvideos:';
   const NEWTAB = 'kxnew:';
   const YOUTUBE_HOME = 'kxyoutube:';
   const BM_KEY = 'kxkos.kxearch.bookmarks';
@@ -280,6 +281,7 @@
       function displayOf(entry) {
         if (entry.startsWith(SEARCH_PREFIX)) return entry.slice(SEARCH_PREFIX.length);
         if (entry.startsWith(IMAGES_PREFIX)) return entry.slice(IMAGES_PREFIX.length);
+        if (entry.startsWith(VIDEOS_PREFIX)) return entry.slice(VIDEOS_PREFIX.length);
         if (entry === NEWTAB) return '';
         if (entry === YOUTUBE_HOME) return 'https://www.youtube.com/';
         return entry;
@@ -475,7 +477,7 @@
         fresh.addEventListener('submit', (e) => {
           e.preventDefault();
           const q = field.value.trim();
-          if (q) go(tab, SEARCH_PREFIX + 'site:youtube.com/watch ' + q);
+          if (q) go(tab, VIDEOS_PREFIX + q);
         });
         hero.append(
           KX.el('div', { class: 'kx-kxearch-search-logo', text: 'YouTube' }),
@@ -514,6 +516,17 @@
           }),
           externalButton('https://www.twitch.tv/', 'Open twitch.tv in a normal tab')
         );
+        const tiles = KX.el('div', { class: 'kx-kxearch-tiles' });
+        ['kaicenat', 'xqc', 'pokimane', 'shroud', 'summit1g', 'ninja', 'tfue', 'asmongold'].forEach((name) => {
+          const tile = KX.el('button', { class: 'kx-kxearch-tile', type: 'button', title: 'twitch.tv/' + name });
+          tile.append(
+            KX.el('span', { class: 'kx-kxearch-tile-icon', text: name[0].toUpperCase() }),
+            KX.el('span', { class: 'kx-kxearch-tile-name', text: name })
+          );
+          tile.addEventListener('click', () => go(tab, 'https://www.twitch.tv/' + name));
+          tiles.appendChild(tile);
+        });
+        hero.appendChild(tiles);
         container.appendChild(hero);
         setPane(tab, container);
         setTitle(tab, 'Twitch');
@@ -522,7 +535,7 @@
 
       function resultTabs(tab, query, type) {
         const row = KX.el('div', { class: 'kx-kxearch-result-tabs' });
-        [['all', 'All', SEARCH_PREFIX], ['images', 'Images', IMAGES_PREFIX]].forEach(([id, label, prefix]) => {
+        [['all', 'All', SEARCH_PREFIX], ['videos', 'Videos', VIDEOS_PREFIX], ['images', 'Images', IMAGES_PREFIX]].forEach(([id, label, prefix]) => {
           const b = KX.el('button', {
             class: 'kx-kxearch-result-tab' + (id === type ? ' active' : ''),
             type: 'button',
@@ -661,6 +674,57 @@
         setPane(tab, container);
       }
 
+      function drawVideos(tab, query, items, note) {
+        const { container, page } = resultsShell(tab, query, 'videos', note);
+        if (items.length) {
+          const grid = KX.el('div', { class: 'kx-kxearch-video-grid' });
+          items.forEach((v) => {
+            const card = KX.el('button', { class: 'kx-kxearch-video-card', type: 'button', title: v.title });
+            const thumb = KX.el('div', { class: 'kx-kxearch-video-thumb' });
+            if (v.thumb) {
+              const img = KX.el('img', { alt: '', loading: 'lazy' });
+              img.src = proxyUrl(v.thumb);
+              thumb.appendChild(img);
+            }
+            if (v.duration) thumb.appendChild(KX.el('span', { class: 'kx-kxearch-video-time', text: v.duration }));
+            card.append(
+              thumb,
+              KX.el('div', { class: 'kx-kxearch-video-title', text: v.title }),
+              KX.el('div', { class: 'kx-kxearch-video-meta', text: [v.channel, v.date].filter(Boolean).join(' · ') })
+            );
+            card.addEventListener('click', () => go(tab, v.url));
+            grid.appendChild(card);
+          });
+          page.appendChild(grid);
+        } else {
+          const box = KX.el('div', { class: 'kx-kxearch-results' });
+          box.appendChild(KX.el('div', { class: 'kx-kxearch-empty', text: note || 'No videos found.' }));
+          page.appendChild(box);
+        }
+        setPane(tab, container);
+      }
+
+      async function doVideos(tab, query) {
+        const token = (tab.token = (tab.token || 0) + 1);
+        setTitle(tab, query + ' – Videos');
+        drawVideos(tab, query, [], 'Searching videos…');
+        setStatus(tab, 'Searching videos for “' + query + '”…');
+        let items = [];
+        let note = '';
+        try {
+          const res = await fetch(PROXY + 'search?type=videos&q=' + encodeURIComponent(query));
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          items = (Array.isArray(data.results) ? data.results : []).filter((r) => r && isHttpUrl(r.url));
+          note = data.note || '';
+        } catch {
+          note = 'The video search could not be reached.';
+        }
+        if (tab.token !== token) return;
+        drawVideos(tab, query, items, items.length ? 'Videos for “' + query + '”' : note || 'No videos found.');
+        setStatus(tab, items.length + ' videos');
+      }
+
       async function doImages(tab, query) {
         const token = (tab.token = (tab.token || 0) + 1);
         setTitle(tab, query + ' – Images');
@@ -693,7 +757,7 @@
 
         const ytq = youtubeSearchQuery(url);
         if (ytq) {
-          doSearch(tab, 'site:youtube.com/watch ' + ytq);
+          doVideos(tab, ytq);
           return;
         }
 
@@ -777,6 +841,8 @@
           doSearch(tab, entry.slice(SEARCH_PREFIX.length));
         } else if (entry.startsWith(IMAGES_PREFIX)) {
           doImages(tab, entry.slice(IMAGES_PREFIX.length));
+        } else if (entry.startsWith(VIDEOS_PREFIX)) {
+          doVideos(tab, entry.slice(VIDEOS_PREFIX.length));
         } else {
           show(tab, entry);
         }

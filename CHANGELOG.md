@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- KXEARCH: Videos tab (YouTube/Google video results with thumbnails, click to watch in the player); YouTube search now uses it; Twitch start page has quick channel tiles
+- Worker: `/search?type=videos` (needs `SERPER_API_KEY`). Must be redeployed
 - KXEARCH: Twitch chat panel (Chat button; Twitch's own login works inside it); hints on how YouTube/Twitch sign-in works with the embedded players
 - Twitch start page (type a channel name, built-in player); Twitch directory/search paths no longer treated as channels
 - Worker: fixed consent cookie for YouTube/Google so cookie banners stop looping; page cookie jar persists per site; navigating to the worker root from a frame recovers the site instead of showing "Proxy is running". Must be redeployed

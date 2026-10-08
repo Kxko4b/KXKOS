@@ -829,6 +829,21 @@ async function searchImagesSerper(q, key) {
     .filter((r) => r.image && r.thumb);
 }
 
+async function searchVideosSerper(q, key) {
+  const data = await serperPost('videos', key, q);
+  return (data.videos || [])
+    .map((r) => ({
+      title: stripTags(r.title),
+      url: publicHttpUrl(r.link),
+      thumb: publicHttpUrl(r.imageUrl),
+      description: stripTags(r.snippet),
+      channel: stripTags(r.channel || r.source || ''),
+      duration: stripTags(r.duration || ''),
+      date: stripTags(r.date || '')
+    }))
+    .filter((r) => r.url && r.title);
+}
+
 async function handleSearch(request, reqUrl, env) {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   const origin = request.headers.get('origin');
@@ -845,7 +860,10 @@ async function handleSearch(request, reqUrl, env) {
   if (!q) return json({ query: q, source: 'none', results: [] }, 200, cors);
 
   const attempts = [];
-  if (reqUrl.searchParams.get('type') === 'images') {
+  if (reqUrl.searchParams.get('type') === 'videos') {
+    if (!env.SERPER_API_KEY) return json({ query: q, source: 'none', note: 'Video search needs SERPER_API_KEY.', results: [] }, 200, cors);
+    attempts.push(['serper', () => searchVideosSerper(q, env.SERPER_API_KEY)]);
+  } else if (reqUrl.searchParams.get('type') === 'images') {
     if (env.SERPER_API_KEY) attempts.push(['serper', () => searchImagesSerper(q, env.SERPER_API_KEY)]);
     if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchImagesBrave(q, env.BRAVE_API_KEY)]);
     attempts.push(['duckduckgo', () => searchImagesDuckDuckGo(q)]);
@@ -854,7 +872,7 @@ async function handleSearch(request, reqUrl, env) {
     if (env.SERPER_API_KEY) attempts.push(['serper', () => searchSerper(q, env.SERPER_API_KEY)]);
     if (env.BRAVE_API_KEY) attempts.push(['brave', () => searchBrave(q, env.BRAVE_API_KEY)]);
   }
-  if (reqUrl.searchParams.get('type') !== 'images') {
+  if (!reqUrl.searchParams.get('type')) {
     attempts.push(['duckduckgo', () => searchDuckDuckGo(q)]);
     attempts.push(['wikipedia', () => searchWikipedia(q)]);
   }

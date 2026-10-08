@@ -19,6 +19,7 @@ The URL is set as `PROXY` in `src/apps/kxearch/kxearch.js`.
 | --- | --- |
 | `/?url=<encoded url>` | fetch a public page and return it with links rewritten |
 | `/search?q=<query>` | JSON `{query, source, results:[{title,url,description}]}` |
+| `/search?type=videos&q=<query>` | JSON video results `{title,url,thumb,channel,duration,date}` (needs `SERPER_API_KEY`) |
 | `/search?type=images&q=<query>` | JSON image results `{title,image,thumb,url}` (Brave, DuckDuckGo, Wikimedia Commons) |
 
 ### Safety model (deny-list, not allow-list)

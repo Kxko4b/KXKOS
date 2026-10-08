@@ -1340,3 +1340,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-kxearch-embed-row { flex: 1; min-height: 0; display: flex; }
 .kx-kxearch-embed-row > .kx-kxearch-frame { flex: 1; min-width: 0; height: 100%; border: 0; }
 .kx-kxearch-embed-chat { width: 340px; max-width: 45%; height: 100%; border: 0; border-left: 2px solid var(--kx-ink); }
+
+.kx-kxearch-video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; width: min(1000px, calc(100% - 24px)); margin: 16px auto 30px; }
+.kx-kxearch-video-card { display: block; padding: 0; border: 0; background: transparent; color: var(--kx-ink); text-align: left; cursor: pointer; font: inherit; }
+.kx-kxearch-video-thumb { position: relative; aspect-ratio: 16 / 9; background: #cfd8e6; border: 2px solid var(--kx-ink); overflow: hidden; }
+.kx-kxearch-video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.kx-kxearch-video-card:hover .kx-kxearch-video-thumb { border-color: var(--kx-accent); }
+.kx-kxearch-video-time { position: absolute; right: 4px; bottom: 4px; padding: 1px 5px; background: rgba(0, 0, 0, 0.8); color: #fff; font-size: 11px; }
+.kx-kxearch-video-title { margin-top: 6px; font-weight: 700; font-size: 13px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kx-kxearch-video-meta { margin-top: 2px; font-size: 12px; opacity: 0.7; }
