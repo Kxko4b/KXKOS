@@ -289,6 +289,77 @@ function buildShim(workerOrigin, baseHref) {
         });
       } catch (e) {}
     });
+
+    // --- Storage / cookies ------------------------------------------------
+    // Pages run on the proxy origin, so give each site its own private
+    // storage namespace and an in-page cookie jar. Nothing leaks between
+    // sites, and scripts that insist on working storage/cookies stop failing.
+    try {
+      var PFX = new URL(B).origin + '|';
+      var mem = {};
+      var realOf = function (name) {
+        try { var r = window[name]; r.getItem('__kx'); return r; } catch (e) {}
+        return {
+          get length() { return Object.keys(mem).length; },
+          key: function (i) { return Object.keys(mem)[i] || null; },
+          getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+          setItem: function (k, v) { mem[k] = String(v); },
+          removeItem: function (k) { delete mem[k]; }
+        };
+      };
+      var wrapStorage = function (real) {
+        var keys = function () {
+          var out = [];
+          for (var i = 0; i < real.length; i++) {
+            var k = real.key(i);
+            if (k && k.indexOf(PFX) === 0) out.push(k.slice(PFX.length));
+          }
+          return out;
+        };
+        var api = {
+          getItem: function (k) { return real.getItem(PFX + k); },
+          setItem: function (k, v) { real.setItem(PFX + k, String(v)); },
+          removeItem: function (k) { real.removeItem(PFX + k); },
+          clear: function () { keys().forEach(function (k) { real.removeItem(PFX + k); }); },
+          key: function (i) { var k = keys()[i]; return k === undefined ? null : k; }
+        };
+        return new Proxy(api, {
+          get: function (t, p) {
+            if (p === 'length') return keys().length;
+            if (p in t) return t[p];
+            if (typeof p === 'string') { var v = real.getItem(PFX + p); return v === null ? undefined : v; }
+          },
+          set: function (t, p, v) { if (typeof p === 'string') real.setItem(PFX + p, String(v)); return true; },
+          deleteProperty: function (t, p) { real.removeItem(PFX + String(p)); return true; },
+          has: function (t, p) { return p in t || keys().indexOf(String(p)) >= 0; },
+          ownKeys: function () { return keys(); },
+          getOwnPropertyDescriptor: function (t, p) {
+            return keys().indexOf(String(p)) >= 0 ? { value: real.getItem(PFX + String(p)), writable: true, enumerable: true, configurable: true } : undefined;
+          }
+        });
+      };
+      ['localStorage', 'sessionStorage'].forEach(function (name) {
+        var w = wrapStorage(realOf(name));
+        try { Object.defineProperty(window, name, { configurable: true, get: function () { return w; } }); } catch (e) {}
+      });
+      var jar = {};
+      Object.defineProperty(Document.prototype, 'cookie', {
+        configurable: true,
+        get: function () { return Object.keys(jar).map(function (k) { return k + '=' + jar[k]; }).join('; '); },
+        set: function (str) {
+          var s = String(str), first = s.split(';')[0], i = first.indexOf('=');
+          if (i < 0) return;
+          var k = first.slice(0, i).trim(), v = first.slice(i + 1);
+          if (/max-age=0|expires=[^;]*1970/i.test(s)) delete jar[k]; else jar[k] = v;
+        }
+      });
+    } catch (e) {}
+
+    // Let single-page apps that route on location.pathname see the real path.
+    try {
+      var real = new URL(B);
+      history.replaceState(history.state, '', real.pathname + real.search + real.hash);
+    } catch (e) {}
   }.toString() + ')(' + JSON.stringify(workerOrigin) + ',' + JSON.stringify(baseHref) + ');';
 }
 
@@ -364,7 +435,7 @@ function buildHeaders(upstream, isHtml) {
   // Even if the client forgets to sandbox the iframe, the page is sandboxed.
   h.set(
     'content-security-policy',
-    'sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
+    'sandbox allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
   );
   if (isHtml) h.set('cache-control', 'no-store');
   return h;
@@ -382,6 +453,9 @@ async function handleProxy(request, reqUrl) {
 
   const target = reqUrl.searchParams.get('url');
   if (!target) {
+    if (reqUrl.pathname !== '/') {
+      return text(404, 'This page was reloaded outside KXEARCH. Use the refresh button inside KXEARCH instead.');
+    }
     return text(200, 'KXEARCH Proxy is running.');
   }
 

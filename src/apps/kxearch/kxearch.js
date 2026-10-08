@@ -361,11 +361,16 @@
         };
         const player = mk('Player', () => { frame.src = src; });
         const viaProxy = mk('Via proxy', () => {
-          frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads');
+          frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads');
           frame.src = proxyUrl(pageUrl);
         });
+        const nocookie = pageUrl && youtubeId(pageUrl)
+          ? mk('Privacy player', () => { frame.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(youtubeId(pageUrl)) + '?playsinline=1'; })
+          : null;
         const out = mk('New tab', () => window.open(pageUrl, '_blank', 'noopener,noreferrer'));
-        barEl.append(note, player, viaProxy, out);
+        barEl.append(note, player);
+        if (nocookie) barEl.appendChild(nocookie);
+        barEl.append(viaProxy, out);
         wrap.append(barEl, frame);
         return wrap;
       }
@@ -679,7 +684,7 @@
           class: 'kx-kxearch-frame',
           title: 'KXEARCH web view',
           referrerpolicy: 'no-referrer',
-          sandbox: 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
+          sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads'
         });
         frame.src = proxyUrl(url);
         setPane(tab, frame);

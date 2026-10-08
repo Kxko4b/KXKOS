@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed pages that failed with errors like GitHub's "What‽": proxied pages now get working per-site storage and a cookie jar instead of a locked-down sandbox; YouTube player bar gets a privacy-player option
 - KXEARCH: YouTube/Twitch player bar with Via proxy / New tab fallbacks and a file:// warning
 - Worker: POST support, site-as-referrer so hotlink-protected media loads
 - KXEARCH: tabs, new-tab page with big search bar, bookmarks bar, image search with viewer, YouTube home/search page, sign-in notice instead of a blocked page

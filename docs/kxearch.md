@@ -28,8 +28,8 @@ private/loopback/link-local/reserved IPv4 (including `2130706433`, `0x7f.1` styl
 internal hostnames (`.local`, `.internal`, ...), and the proxy itself. Every redirect hop is re-checked.
 Cookies, `Authorization`, `Referer` and `Origin` are never forwarded; `Set-Cookie` and upstream CSP/X-Frame-Options are dropped.
 GET/HEAD/POST (POST bodies up to 1 MB; the site sees itself as referrer, never your address or cookies), 15 s timeout, size limits (8 MB HTML, 40 MB other), best-effort rate limit per IP.
-Responses carry `Content-Security-Policy: sandbox ...` and the iframe is sandboxed without `allow-same-origin`,
-so proxied sites cannot read each other's storage.
+Responses carry `Content-Security-Policy: sandbox ...` and the iframe is sandboxed (no top navigation, no access to KXKOS).
+Proxied pages share the proxy's origin, so an injected script gives every site its own private `localStorage`/`sessionStorage` namespace and an in-page cookie jar; sites cannot read each other's data.
 
 ### Cookies and sign-in
 
@@ -47,7 +47,7 @@ The player bar above each video also offers "Via proxy" and "New tab" as fallbac
 ### Limits
 
 - Scripts that call `fetch`/`XMLHttpRequest` with relative URLs go to the proxy origin and usually fail; sites that need logins, DRM or heavy JS apps may not work.
-- Sandboxed pages have no localStorage/cookies, so some sites show consent or login walls.
+- Pages see the proxy's address as `location`, not the real one (the path is mirrored for single-page apps). Big web apps such as GitHub's logged-in pages, YouTube's full site and Google products may still break; public pages usually work.
 - Rate limiting is per Worker instance, not global. For real abuse protection add a Cloudflare rate-limiting rule.
 
 ### Search providers
