@@ -12,6 +12,7 @@
  * Optional Worker settings (Cloudflare dashboard > Settings > Variables):
  *   SERPER_API_KEY   (secret)  Google results via serper.dev (2,500 free searches, no card)
  *   BRAVE_API_KEY    (secret)  alternative: Brave Search API (needs a card)
+ *   TWITCH_CLIENT_SECRET (secret) enables /twitch/streams (client id is public and built in)
  *   ALLOWED_ORIGINS  (text)    comma separated origins allowed to call /search,
  *                              e.g. "https://kxko4b.github.io". Default: any.
  *
@@ -844,6 +845,63 @@ async function searchVideosSerper(q, key) {
     .filter((r) => r.url && r.title);
 }
 
+
+/* ------------------------------------------------------------------ Twitch live list */
+
+const TWITCH_DEFAULT_CLIENT_ID = 'g409wdrbsmykwl3250dhaw2uq73f21';
+let twitchToken = { value: '', exp: 0 };
+const twitchCache = new Map();
+
+async function twitchAppToken(env) {
+  if (twitchToken.value && Date.now() < twitchToken.exp) return twitchToken.value;
+  const body = new URLSearchParams({
+    client_id: env.TWITCH_CLIENT_ID || TWITCH_DEFAULT_CLIENT_ID,
+    client_secret: env.TWITCH_CLIENT_SECRET,
+    grant_type: 'client_credentials'
+  });
+  const res = await fetch('https://id.twitch.tv/oauth2/token', { method: 'POST', body });
+  if (!res.ok) throw new Error('Twitch token request failed.');
+  const data = await res.json();
+  twitchToken = { value: data.access_token, exp: Date.now() + Math.max(60, (data.expires_in || 3600) - 300) * 1000 };
+  return twitchToken.value;
+}
+
+async function handleTwitch(request, reqUrl, env) {
+  const cors = { 'access-control-allow-origin': '*' };
+  if (!env.TWITCH_CLIENT_SECRET) {
+    return json({ configured: false, streams: [], note: 'Add the TWITCH_CLIENT_SECRET secret to the worker.' }, 200, cors);
+  }
+  const q = (reqUrl.searchParams.get('q') || '').trim().slice(0, 100);
+  const key = q.toLowerCase();
+  const hit = twitchCache.get(key);
+  if (hit && Date.now() - hit.t < 60000) return json(hit.data, 200, cors);
+  try {
+    const token = await twitchAppToken(env);
+    const headers = { authorization: 'Bearer ' + token, 'client-id': env.TWITCH_CLIENT_ID || TWITCH_DEFAULT_CLIENT_ID };
+    let streams;
+    if (q) {
+      const r = await fetch('https://api.twitch.tv/helix/search/channels?live_only=true&first=24&query=' + encodeURIComponent(q), { headers });
+      if (!r.ok) throw new Error('Twitch search failed.');
+      const d = await r.json();
+      streams = (d.data || []).map((c) => ({ login: c.broadcaster_login, name: c.display_name, title: c.title, game: c.game_name, viewers: null, thumb: c.thumbnail_url }));
+    } else {
+      const r = await fetch('https://api.twitch.tv/helix/streams?first=24', { headers });
+      if (!r.ok) throw new Error('Twitch streams failed.');
+      const d = await r.json();
+      streams = (d.data || []).map((c) => ({
+        login: c.user_login, name: c.user_name, title: c.title, game: c.game_name, viewers: c.viewer_count,
+        thumb: (c.thumbnail_url || '').replace('{width}', '320').replace('{height}', '180')
+      }));
+    }
+    const data = { configured: true, streams: streams.filter((x) => /^[A-Za-z0-9_]{1,25}$/.test(x.login)) };
+    twitchCache.set(key, { t: Date.now(), data });
+    if (twitchCache.size > 50) twitchCache.delete(twitchCache.keys().next().value);
+    return json(data, 200, cors);
+  } catch (e) {
+    return json({ configured: true, streams: [], note: 'Twitch is not answering right now.' }, 200, cors);
+  }
+}
+
 async function handleSearch(request, reqUrl, env) {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   const origin = request.headers.get('origin');
@@ -943,6 +1001,9 @@ export default {
     try {
       if (reqUrl.pathname === '/search') {
         return await handleSearch(request, reqUrl, env || {});
+      }
+      if (reqUrl.pathname === '/twitch/streams') {
+        return await handleTwitch(request, reqUrl, env || {});
       }
       return await handleProxy(request, reqUrl);
     } catch (err) {

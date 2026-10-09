@@ -72,3 +72,6 @@ Never put keys in frontend code or in the repo.
 Worker logic: mock `fetch` and call `worker.fetch(...)` in Node (validation, redirects, header stripping, search parsing).
 HTML link rewriting needs the Workers runtime (`HTMLRewriter`); check it after deploying by opening a page.
 UI: open KXEARCH, search `youtube`, open a result, use back/forward.
+
+## Twitch live list
+Create a Twitch application, then in Cloudflare add the secret `TWITCH_CLIENT_SECRET` to the worker. The Client ID is public and built in (override with `TWITCH_CLIENT_ID`). The Twitch home page then shows a "Live now" grid. Without the secret the grid is simply hidden.

@@ -495,6 +495,25 @@
         setStatus(tab, 'YouTube');
       }
 
+      async function loadLive(tab, box, q) {
+        try {
+          const res = await fetch(PROXY + 'twitch/streams' + (q ? '?q=' + encodeURIComponent(q) : ''));
+          const data = await res.json();
+          if (!data.configured || !data.streams || !data.streams.length) return;
+          box.appendChild(KX.el('h3', { class: 'kx-kxearch-live-title', text: 'Live now' }));
+          const grid = KX.el('div', { class: 'kx-kxearch-live-grid' });
+          data.streams.forEach((s) => {
+            const card = KX.el('button', { class: 'kx-kxearch-live-card', type: 'button', title: s.title || '' });
+            if (s.thumb && /^https:\/\//.test(s.thumb)) card.appendChild(KX.el('img', { src: s.thumb, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }));
+            card.appendChild(KX.el('span', { class: 'kx-kxearch-live-name', text: s.name + (s.viewers != null ? ' · ' + s.viewers : '') }));
+            card.appendChild(KX.el('span', { class: 'kx-kxearch-live-game', text: s.game || '' }));
+            card.addEventListener('click', () => go(tab, 'https://www.twitch.tv/' + s.login));
+            grid.appendChild(card);
+          });
+          box.appendChild(grid);
+        } catch { /* worker offline: the quick tiles still work */ }
+      }
+
       function renderTwitchHome(tab) {
         const container = KX.el('div', { class: 'kx-kxearch-search-container' });
         const hero = KX.el('div', { class: 'kx-kxearch-newtab' });
@@ -527,6 +546,9 @@
           tiles.appendChild(tile);
         });
         hero.appendChild(tiles);
+        const live = KX.el('div', { class: 'kx-kxearch-live' });
+        hero.appendChild(live);
+        loadLive(tab, live, '');
         container.appendChild(hero);
         setPane(tab, container);
         setTitle(tab, 'Twitch');

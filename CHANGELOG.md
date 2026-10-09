@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- KXEARCH Twitch home: "Live now" grid from the worker route `/twitch/streams` (needs the `TWITCH_CLIENT_SECRET` worker secret; Client ID is built in).
+
 - Percstown signal box game (first version): clickable diagram, lever frame with draft interlocking, track-circuit lights, block bell with Web Audio sounds, bell-code bot that talks to Riceville/Samthon/Bighton and trains that run on their own. See docs/signalbox.md.
 
 - Paint: lasso (cut and move), text tool, custom colour picker, ruler (strokes snap along it), undo, and hold-still snapping of a stroke into an editable line or bezier curve with draggable handles.

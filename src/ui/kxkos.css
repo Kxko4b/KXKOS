@@ -1446,3 +1446,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-sb-me { color: #2f6fdf; } .kx-sb-bot { color: #7a4a00; } .kx-sb-info { color: #55607a; }
 .kx-sb-time { opacity: .5; }
 @keyframes kx-sb-blink { 50% { opacity: .4; } }
+
+/* Twitch live now */
+.kx-kxearch-live-title { margin: 14px 0 6px; }
+.kx-kxearch-live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.kx-kxearch-live-card { display: flex; flex-direction: column; gap: 2px; text-align: left; background: #fff; border: 2px solid var(--kx-ink, #1b2a49); padding: 0 0 6px; cursor: pointer; overflow: hidden; }
+.kx-kxearch-live-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #222; }
+.kx-kxearch-live-name { font-weight: bold; padding: 0 6px; }
+.kx-kxearch-live-game { font-size: 12px; color: #55607a; padding: 0 6px; }
