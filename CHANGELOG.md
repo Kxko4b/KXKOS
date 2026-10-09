@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Percstown signal box game (first version): clickable diagram, lever frame with draft interlocking, track-circuit lights, block bell with Web Audio sounds, bell-code bot that talks to Riceville/Samthon/Bighton and trains that run on their own. See docs/signalbox.md.
+
 - Paint: lasso (cut and move), text tool, custom colour picker, ruler (strokes snap along it), undo, and hold-still snapping of a stroke into an editable line or bezier curve with draggable handles.
 - Window snapping: drag a window to the left/right edge for half screen, top edge to maximise; dragging it away restores its size.
 - Desktop right-click menu (next wallpaper, settings, fullscreen, open apps); new wallpapers Sunset, Mint, Grid.

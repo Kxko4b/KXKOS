@@ -79,6 +79,10 @@
     inbox:
       '<path d="M4 18l4-12h16l4 12v8H4z" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"/>' +
       '<path d="M4 18h7l2 3h6l2-3h7" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"/>',
+
+    signal:
+      '<rect x="14" y="12" width="4" height="18" fill="' + INK + '"/><rect x="9" y="3" width="14" height="12" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<circle cx="16" cy="9" r="3" fill="#e5484d"/>',
   };
 
   /** SVG markup for a named icon at the given pixel size (default 32). */
