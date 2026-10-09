@@ -127,6 +127,9 @@
     { id: 'dusk', name: 'Dusk' },
     { id: 'night', name: 'Night' },
     { id: 'teal', name: 'Teal' },
+    { id: 'sunset', name: 'Sunset' },
+    { id: 'mint', name: 'Mint' },
+    { id: 'grid', name: 'Grid' },
   ];
 
   const DEFAULTS = { wallpaper: 'bliss', accent: '#3b8fe0', clock24: true };

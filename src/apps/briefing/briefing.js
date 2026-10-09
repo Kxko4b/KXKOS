@@ -51,15 +51,16 @@
 
   const isOwner = () => !!session && session.email === OWNER;
 
+  // Owner-only apps (Notes, Requests) register here so their desktop icon follows the sign-in.
+  const ownerApps = new Set(['briefing']);
   function syncVisibility() {
-    const app = KX.apps.briefing;
-    if (!app) return;
     const show = isOwner();
-    // Start menu always lists Briefing so you can sign in; the desktop icon appears for the owner only.
-    if (app.desktop !== show) {
+    ownerApps.forEach((id) => {
+      const app = KX.apps[id];
+      if (!app || app.desktop === show) return;
       app.desktop = show;
       KX.emit('apps:changed', app);
-    }
+    });
   }
 
   async function refresh() {
@@ -232,5 +233,21 @@
     }
   });
 
+  // Shared owner API for other apps. Every call is checked by Supabase row-level security / the function itself.
+  KX.owner = {
+    isOwner,
+    watch(id) { ownerApps.add(id); syncVisibility(); },
+    async api(path, opts) {
+      if (!isOwner()) throw new Error('Sign in with the Briefing app first (owner only).');
+      if (session.expires_at - Date.now() < 60000) await refresh();
+      const go = () => fetch(SB + path, Object.assign({}, opts, {
+        headers: Object.assign({ apikey: KEY, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' }, (opts && opts.headers) || {})
+      }));
+      let r = await go();
+      if (r.status === 401 && (await refresh())) r = await go();
+      if (!r.ok) throw new Error('Request failed (HTTP ' + r.status + ').');
+      return r.status === 204 ? null : r.json();
+    }
+  };
   syncVisibility();
 })();

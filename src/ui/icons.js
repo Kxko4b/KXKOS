@@ -71,6 +71,14 @@
     clock:
       '<circle cx="16" cy="16" r="12" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M16 8v8l5 3" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
+
+    notes:
+      '<rect x="7" y="4" width="18" height="24" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M11 11h10M11 16h10M11 21h6" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="4" r="2" fill="#e5484d"/>',
+
+    inbox:
+      '<path d="M4 18l4-12h16l4 12v8H4z" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"/>' +
+      '<path d="M4 18h7l2 3h6l2-3h7" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"/>',
   };
 
   /** SVG markup for a named icon at the given pixel size (default 32). */

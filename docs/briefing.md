@@ -12,3 +12,7 @@
 ## daily-briefing is no longer public
 `daily-briefing` (sends the push notification) rejects calls without the header `x-cron-secret`.
 The function stores only the SHA-256 of the secret; the pg_cron jobs 4-9 send the secret.
+
+## Notes and Requests
+Both are owner-only. They use the Briefing sign-in (`KX.owner.api`) and talk to Supabase directly;
+row-level security (`kxkos_notes` policy, existing `requests` admin policy) enforces the owner check.

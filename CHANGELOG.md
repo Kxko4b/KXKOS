@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Paint: lasso (cut and move), text tool, custom colour picker, ruler (strokes snap along it), undo, and hold-still snapping of a stroke into an editable line or bezier curve with draggable handles.
+- Window snapping: drag a window to the left/right edge for half screen, top edge to maximise; dragging it away restores its size.
+- Desktop right-click menu (next wallpaper, settings, fullscreen, open apps); new wallpapers Sunset, Mint, Grid.
+- Owner-only Notes (synced to Supabase table `kxkos_notes`, RLS limited to the owner) and Requests inbox (Leverframe requests, change status). Shared sign-in via `KX.owner`.
+
 - New apps: Paint (brush, colours, eraser, save PNG), Snake (arrow keys/WASD, saved best score), Clock (time, stopwatch, timer).
 
 - Leverframe app: embeds the custom Leverframe site (Reload, Home, Status, open in new tab).

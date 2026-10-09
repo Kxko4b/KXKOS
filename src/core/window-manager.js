@@ -145,24 +145,76 @@
 
   /* ------------------------------------------------------------ drag / resize */
 
+  function snapZone(ev) {
+    const size = hostSize();
+    if (ev.clientY <= 6) return 'top';
+    if (ev.clientX <= 6) return 'left';
+    if (ev.clientX >= size.w - 7) return 'right';
+    return null;
+  }
+
+  function snapRect(zone) {
+    const size = hostSize();
+    if (zone === 'left') return { x: 0, y: 0, w: Math.floor(size.w / 2), h: size.h };
+    if (zone === 'right') return { x: Math.floor(size.w / 2), y: 0, w: Math.ceil(size.w / 2), h: size.h };
+    return { x: 0, y: 0, w: size.w, h: size.h };
+  }
+
+  function snapPreview() {
+    let el = document.getElementById('kx-snap-preview');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'kx-snap-preview';
+      (document.getElementById('kx-windows') || document.body).appendChild(el);
+    }
+    return el;
+  }
+
   function enableDrag(win, handle) {
     handle.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest('.kx-controls') || win.maximized) return;
       const startX = e.clientX;
       const startY = e.clientY;
       const origin = { x: win.rect.x, y: win.rect.y };
+      let zone = null;
       handle.setPointerCapture(e.pointerId);
       win.el.classList.add('dragging');
 
       const move = (ev) => {
         const size = hostSize();
+        // A snapped window gets its old size back as soon as it is dragged away.
+        if (win._preSnap && (Math.abs(ev.clientX - startX) > 4 || Math.abs(ev.clientY - startY) > 4)) {
+          const pre = win._preSnap;
+          win._preSnap = null;
+          win.rect.w = pre.w; win.rect.h = pre.h;
+          origin.x = ev.clientX - Math.round(pre.w / 2) - (startX - ev.clientX) * 0;
+          origin.y = win.rect.y;
+          win._dragShift = { x: ev.clientX, y: ev.clientY };
+        }
+        const sx = win._dragShift ? win._dragShift.x : startX;
+        const sy = win._dragShift ? win._dragShift.y : startY;
         // Keep at least 60px of the titlebar reachable on screen.
-        win.rect.x = clamp(origin.x + ev.clientX - startX, 60 - win.rect.w, size.w - 60);
-        win.rect.y = clamp(origin.y + ev.clientY - startY, 0, size.h - 30);
+        win.rect.x = clamp(origin.x + ev.clientX - sx, 60 - win.rect.w, size.w - 60);
+        win.rect.y = clamp(origin.y + ev.clientY - sy, 0, size.h - 30);
         applyRect(win);
+        zone = snapZone(ev);
+        const prev = snapPreview();
+        if (zone) {
+          const r = snapRect(zone);
+          prev.style.cssText = 'display:block;left:' + r.x + 'px;top:' + r.y + 'px;width:' + r.w + 'px;height:' + r.h + 'px';
+        } else prev.style.display = 'none';
       };
       const end = () => {
         win.el.classList.remove('dragging');
+        win._dragShift = null;
+        const prev = document.getElementById('kx-snap-preview');
+        if (prev) prev.style.display = 'none';
+        if (zone) {
+          win._preSnap = { w: win.rect.w, h: win.rect.h };
+          Object.assign(win.rect, snapRect(zone));
+          applyRect(win);
+          emitChange();
+        }
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', end);
         handle.removeEventListener('pointercancel', end);

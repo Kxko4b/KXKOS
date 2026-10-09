@@ -107,6 +107,37 @@
     return true;
   }
 
+  /* ------------------------------------------------------------ context menu */
+
+  function initContextMenu() {
+    const desk = document.getElementById('kx-desktop');
+    let menu = null;
+    const close = () => { if (menu) { menu.remove(); menu = null; } };
+    desk.addEventListener('contextmenu', (e) => {
+      if (e.target.id !== 'kx-desktop' && e.target.id !== 'kx-icons') return;
+      e.preventDefault();
+      close();
+      const item = (label, fn) => KX.el('button', { type: 'button', class: 'kx-ctx-item', text: label, onclick: () => { close(); fn(); } });
+      const apps = KX.listApps().filter((a) => a.startMenu).slice(0, 8);
+      menu = KX.el('div', { class: 'kx-ctx', role: 'menu' },
+        item('Next wallpaper', () => {
+          const list = KX.wallpapers, i = list.findIndex((w) => w.id === KX.settings.get('wallpaper'));
+          KX.settings.set('wallpaper', list[(i + 1) % list.length].id);
+        }),
+        item('Settings', () => KX.openApp('settings')),
+        item('Toggle fullscreen', toggleFullscreen),
+        KX.el('div', { class: 'kx-ctx-sep' }),
+        ...apps.map((a) => item('Open ' + a.title, () => KX.openApp(a.id))));
+      document.body.appendChild(menu);
+      const w = menu.offsetWidth, h = menu.offsetHeight;
+      menu.style.left = Math.min(e.clientX, window.innerWidth - w - 4) + 'px';
+      menu.style.top = Math.min(e.clientY, window.innerHeight - h - 4) + 'px';
+    });
+    document.addEventListener('pointerdown', (e) => { if (menu && !menu.contains(e.target)) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    window.addEventListener('blur', close);
+  }
+
   /* --------------------------------------------------------------------- init */
 
   KX.desktop = {
@@ -133,6 +164,7 @@
         }
       });
 
+      initContextMenu();
       initFullscreen();
     },
     toggleFullscreen,
