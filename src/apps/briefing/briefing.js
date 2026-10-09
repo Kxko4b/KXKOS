@@ -55,9 +55,9 @@
     const app = KX.apps.briefing;
     if (!app) return;
     const show = isOwner();
-    if (app.desktop !== show || app.startMenu !== show) {
+    // Start menu always lists Briefing so you can sign in; the desktop icon appears for the owner only.
+    if (app.desktop !== show) {
       app.desktop = show;
-      app.startMenu = show;
       KX.emit('apps:changed', app);
     }
   }
@@ -132,7 +132,7 @@
     minHeight: 320,
     singleton: true,
     desktop: false,
-    startMenu: false,
+    startMenu: true,
     order: 46,
 
     launch(win) {
