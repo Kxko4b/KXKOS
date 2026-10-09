@@ -51,6 +51,14 @@
       '<path d="M16 3v6M16 23v6M3 16h6M23 16h6M7 7l4 4M21 21l4 4M25 7l-4 4M11 21l-4 4" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round"/>' +
       '<circle cx="16" cy="16" r="8" fill="#2a3a5c" stroke="' + INK + '" stroke-width="2"/>' +
       '<circle cx="13" cy="13" r="2.2" fill="#ffffff"/>',
+
+    frame:
+      '<rect x="4" y="5" width="24" height="22" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M8 22l5-7 4 4 3-5 4 8z" fill="#7bc96f" stroke="' + INK + '" stroke-width="2" stroke-linejoin="round"/>',
+
+    briefing:
+      '<rect x="6" y="3" width="20" height="26" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M10 10h12M10 15h12M10 20h7" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round"/>',
   };
 
   /** SVG markup for a named icon at the given pixel size (default 32). */
