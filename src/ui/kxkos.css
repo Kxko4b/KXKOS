@@ -1369,3 +1369,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-brief-empty, .kx-brief-note { margin: 0; color: #55607a; }
 .kx-brief-login { margin: auto; padding: 20px; display: grid; gap: 10px; max-width: 320px; }
 .kx-brief-input { padding: 6px; border: 2px solid var(--kx-ink, #1b2a49); font: inherit; }
+
+/* Paint, Snake, Clock */
+.kx-paint-wrap { flex: 1; overflow: auto; background: #e8e2cf; display: flex; align-items: center; justify-content: center; }
+.kx-paint-canvas { max-width: 100%; max-height: 100%; background: #fff; border: 2px solid var(--kx-ink, #1b2a49); touch-action: none; cursor: crosshair; }
+.kx-snake-canvas { max-width: 100%; border: 2px solid var(--kx-ink, #1b2a49); outline: none; }
+.kx-paint-sw { width: 22px; height: 22px; border: 2px solid var(--kx-ink, #1b2a49); cursor: pointer; padding: 0; }
+.kx-clock { padding: 12px; display: grid; gap: 6px; }
+.kx-clock h3 { margin: 6px 0 0; font-size: 13px; color: var(--kx-accent, #2f6fdf); }
+.kx-clock-big { font-size: 30px; font-family: monospace; font-weight: bold; }
+.kx-clock-sub { color: #55607a; }
+.kx-clock-row { display: flex; gap: 6px; align-items: center; }

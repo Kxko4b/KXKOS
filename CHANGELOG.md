@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New apps: Paint (brush, colours, eraser, save PNG), Snake (arrow keys/WASD, saved best score), Clock (time, stopwatch, timer).
+
 - Leverframe app: embeds the custom Leverframe site (Reload, Home, Status, open in new tab).
 - Briefing app (owner only, haleannson@gmail.com): email-link sign-in via Supabase Auth, tidy daily briefing cards (weather, school changes, homework, exams, calendar, requests). Backed by the read-only `briefing-view` Edge Function (supabase/functions/briefing-view), which checks the caller's email and sends no push.
 - `wrangler.jsonc` so Cloudflare Workers Builds can auto-deploy the KXEARCH proxy on every push.

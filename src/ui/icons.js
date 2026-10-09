@@ -59,6 +59,18 @@
     briefing:
       '<rect x="6" y="3" width="20" height="26" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M10 10h12M10 15h12M10 20h7" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round"/>',
+
+    paint:
+      '<path d="M16 4C8 4 4 10 4 16c0 7 5 12 11 12 3 0 3-3 1-5-2-3 0-5 3-5h5c3 0 4-2 4-4 0-6-5-10-12-10z" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5" stroke-linejoin="round"/>' +
+      '<circle cx="10" cy="14" r="2" fill="#e5484d"/><circle cx="15" cy="9" r="2" fill="#f7d84a"/><circle cx="21" cy="11" r="2" fill="#2f6fdf"/>',
+
+    snake:
+      '<path d="M6 24h14a4 4 0 0 0 0-8H12a4 4 0 0 1 0-8h14" fill="none" stroke="#2f6f3a" stroke-width="5" stroke-linecap="round"/>' +
+      '<path d="M6 24h14a4 4 0 0 0 0-8H12a4 4 0 0 1 0-8h14" fill="none" stroke="' + INK + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1 7"/>',
+
+    clock:
+      '<circle cx="16" cy="16" r="12" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M16 8v8l5 3" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
   };
 
   /** SVG markup for a named icon at the given pixel size (default 32). */
