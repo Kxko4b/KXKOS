@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased: Calendar
+- New Calendar app: month view, a note per day (saved in the browser).
+
 ## Unreleased: Tiles
 - New Tiles game (slide-and-merge on a 4x4 board): arrow keys, WASD or swipe, best score saved.
 

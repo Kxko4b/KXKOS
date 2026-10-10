@@ -75,6 +75,9 @@
     tiles:
       '<rect x="3" y="3" width="26" height="26" rx="3" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<rect x="7" y="7" width="8" height="8" fill="#ffc772"/><rect x="17" y="7" width="8" height="8" fill="#ff7a5a"/><rect x="7" y="17" width="8" height="8" fill="#8fd6a5"/><rect x="17" y="17" width="8" height="8" fill="#4aa3c9"/>',
+    calendar:
+      '<rect x="3" y="6" width="26" height="23" rx="3" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/><rect x="3" y="6" width="26" height="7" fill="#c0392b" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M10 3v6M22 3v6" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round"/><path d="M9 19h4M15 19h4M9 24h4M15 24h4M21 19h2" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/>',
     clock:
       '<circle cx="16" cy="16" r="12" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M16 8v8l5 3" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
