@@ -2,13 +2,10 @@
   'use strict';
   const KX = window.KXKOS;
   const { el } = KX;
-  const D = KX.signalboxData;
-  const IMG = 'assets/percstown.png';
   const pct = (v, total) => (v / total * 100) + '%';
 
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  const routeOf = (sig) => D.ROUTES[sig];
 
   function conflict(a, b) {
     if (a.dir !== b.dir && a.tcs.some((t) => b.tcs.includes(t))) return true;
@@ -20,21 +17,29 @@
     return false;
   }
 
+  KX.registerSignalBox = function registerSignalBox(cfg) {
+  const D = cfg.data;
+  const IMG = cfg.image;
+  const routeOf = (sig) => D.ROUTES[sig];
   KX.registerApp({
-    id: 'signalbox', title: 'Percstown Signal Box', icon: 'signal', width: 1120, height: 760, minWidth: 640, minHeight: 480,
-    singleton: true, desktop: true, order: 31,
+    id: cfg.id, title: cfg.title, icon: cfg.icon || 'signal', width: 1120, height: 780, minWidth: 640, minHeight: 480,
+    singleton: true, desktop: true, order: cfg.order || 31,
 
     launch(win) {
       /* ------------------------------------------------------------ state */
       const lever = {};
       Object.keys(D.SIGNALS).concat(Object.keys(D.POINTS), D.SPARE).forEach((k) => { lever[k] = 0; });
+      const fpl = {};                 // facing point lock applied
       const cleared = {};             // signal id -> aspect is clear
       const occ = {};                 // track circuit -> train id
       const block = {};
-      Object.keys(D.NEIGHBOURS).forEach((n) => { block[n] = { in: 'idle', out: 'idle', offer: null, attn: 0 }; });
+      Object.keys(D.NEIGHBOURS).forEach((n) => { block[n] = { in: 'idle', out: 'idle', offer: null, attn: 0, biIn: 'blocked', biOut: 'blocked', rang21: false }; });
+      const MOVE = Math.max(1, Math.round((D.MOVE_SECONDS || 9) * (window.__sbFast ? 0.12 : 1)));   // seconds per track circuit
       let trains = [], nextId = 1, muted = false;
       const timers = new Set();
+      const SP = window.__sbFast ? 0.08 : 1;   // test hook only
       const later = (fn, ms) => { const t = setTimeout(() => { timers.delete(t); if (alive()) fn(); }, ms); timers.add(t); return t; };
+      const slow = (fn, ms) => later(fn, ms * SP);
       const alive = () => win.body.isConnected;
 
       /* ------------------------------------------------------------ sound */
@@ -64,9 +69,18 @@
         const g = a.createGain(); g.gain.value = gain;
         s.connect(f); f.connect(g); g.connect(a.destination); s.start(t0);
       }
-      const sBell = (when) => { tone(1245, 0.9, 0.35, 'sine', when); tone(2490, 0.5, 0.12, 'sine', when); tone(3100, 0.25, 0.05, 'sine', when); };
+      // Each neighbour has its own bell, so you can tell who is calling without looking.
+      function sBell(when, nb) {
+        const b = (D.BELLS && D.BELLS[nb]) || { f: 1245, style: 'ding' };
+        if (b.style === 'gong') { tone(b.f, 1.3, 0.38, 'sine', when); tone(b.f * 1.5, 0.9, 0.16, 'triangle', when); tone(b.f * 2.01, 0.5, 0.08, 'sine', when); }
+        else if (b.style === 'dingdong') { tone(b.f, 0.5, 0.33, 'sine', when); tone(b.f * 0.75, 0.7, 0.33, 'sine', when + 0.11); tone(b.f * 2, 0.3, 0.06, 'sine', when); }
+        else if (b.style === 'buzz') { tone(b.f, 0.35, 0.18, 'square', when); tone(b.f * 2, 0.2, 0.05, 'square', when); }
+        else { tone(b.f, 0.9, 0.35, 'sine', when); tone(b.f * 2, 0.5, 0.12, 'sine', when); tone(b.f * 2.5, 0.25, 0.05, 'sine', when); }
+      }
       const sLever = () => { noise(0.07, 0.5, 0, 1800); tone(95, 0.12, 0.5, 'triangle'); noise(0.05, 0.3, 0.16, 3000); };
       const sBI = () => { tone(1800, 0.03, 0.2, 'square'); tone(1500, 0.03, 0.2, 'square', 0.07); };
+      const sKey = () => { noise(0.03, 0.4, 0, 4000); tone(700, 0.04, 0.15, 'square'); };
+      const sNeedle = () => { noise(0.05, 0.3, 0, 1500); tone(260, 0.1, 0.25, 'triangle'); noise(0.04, 0.3, 0.14, 2500); };
       const sRefuse = () => { tone(140, 0.2, 0.4, 'sawtooth'); };
 
       /* ------------------------------------------------------------ log */
@@ -89,6 +103,9 @@
           const want = r.pts[p] === 'R' ? 1 : 0;
           if (lever[p] !== want) return 'Signal ' + sig + ' locked: points ' + p + ' must be ' + (want ? 'reverse' : 'normal') + '.';
         }
+        for (const p of Object.keys(r.pts)) {
+          if ((D.FPL || []).includes(+p) && !fpl[p]) return 'Signal ' + sig + ' locked: FPL on points ' + p + ' not applied.';
+        }
         for (const t of r.tcs) if (occ[t]) return 'Signal ' + sig + ' locked: track circuit ' + t + ' is occupied.';
         for (const s of Object.keys(D.ROUTES)) {
           if (+s !== +sig && lever[s] && conflict(r, D.ROUTES[s])) return 'Signal ' + sig + ' locked by signal ' + s + '.';
@@ -97,12 +114,28 @@
         return null;
       }
       function pointRefusal(p) {
+        if (fpl[p]) return 'Points ' + p + ' locked by their FPL.';
         for (const s of Object.keys(D.ROUTES)) {
           if (lever[s] && p in D.ROUTES[s].pts) return 'Points ' + p + ' locked by signal ' + s + '.';
         }
         const tc = D.POINT_TC[p];
         if (tc && occ[tc]) return 'Points ' + p + ' locked: track circuit ' + tc + ' is occupied.';
         return null;
+      }
+      function pullFpl(p) {
+        ctx();
+        if (fpl[p]) {
+          const held = Object.keys(D.ROUTES).find((s) => lever[s] && p in D.ROUTES[s].pts);
+          const tc = D.POINT_TC[p];
+          const why = held ? 'FPL ' + p + ' locked by signal ' + held + '.' : tc && occ[tc] ? 'FPL ' + p + ' locked: track circuit ' + tc + ' is occupied.' : null;
+          if (why) { sRefuse(); msg(why, true); return; }
+          fpl[p] = 0;
+        } else {
+          const tc = D.POINT_TC[p];
+          if (tc && occ[tc]) { sRefuse(); msg('FPL ' + p + ' cannot be applied: track circuit ' + tc + ' is occupied.', true); return; }
+          fpl[p] = 1;
+        }
+        sLever(); msg('', false); render();
       }
       function pull(id) {
         ctx();
@@ -128,7 +161,7 @@
         const groups = code.split('-').map(Number);
         let t = 0;
         groups.forEach((n, gi) => {
-          for (let i = 0; i < n; i++) { sBell(t); t += 0.38; }
+          for (let i = 0; i < n; i++) { sBell(t, nb); t += 0.42; }
           t += gi < groups.length - 1 ? 0.55 : 0;
         });
         log(D.NEIGHBOURS[nb] + ' rings ' + code + meaning(code), who || 'bot');
@@ -138,7 +171,7 @@
       const beats = {};
       Object.keys(D.NEIGHBOURS).forEach((n) => { beats[n] = { groups: [], last: 0, timer: null }; });
       function beat(nb) {
-        ctx(); sBell(0);
+        ctx(); sKey(); sBell(0, nb);
         const b = beats[nb], now = performance.now();
         if (!b.groups.length || now - b.last > 800) b.groups.push(1); else b.groups[b.groups.length - 1]++;
         b.last = now;
@@ -162,8 +195,7 @@
           n.attn = Date.now(); botRing(nb, '1', 1.5); return;
         }
         if (n.in === 'offered' && n.offer && code === D.CLASSES[n.offer.cls].code) {
-          n.in = 'accepted'; log(D.NEIGHBOURS[nb] + ': line clear accepted, train on its way.', 'bot'); sBI();
-          later(() => { botRing(nb, '2', 0); n.in = 'section'; spawn(nb); }, rand(9, 14) * 1000);
+          n.in = 'accepted'; log(D.NEIGHBOURS[nb] + ': waiting for you to give LINE CLEAR on the instrument.', 'bot'); sBI(); render();
           return;
         }
         if (n.in === 'offered' && n.offer && D.CODES[code] && D.CODES[code].indexOf('Is line clear') === 0) {
@@ -175,17 +207,35 @@
           if (code !== D.CLASSES[t.cls].code) { log(D.NEIGHBOURS[nb] + ': that is not the right class for your train (' + D.CLASSES[t.cls].name + ').', 'bot'); return; }
           if (n.out !== 'idle') { log(D.NEIGHBOURS[nb] + ': the line is not clear for you yet.', 'bot'); return; }
           if (Math.random() < 0.2 && !window.__sbNoRefuse) { log(D.NEIGHBOURS[nb] + ' is not answering. Try again in a moment.', 'bot'); return; }
-          botRing(nb, code, 2.5); later(() => { n.out = 'accepted'; t.exitOk = true; sBI(); render(); }, 2.5 * 1000 + 3000);
+          botRing(nb, code, 2.5);
+          later(() => { n.out = 'accepted'; n.biOut = 'clear'; t.exitOk = true; sNeedle(); log(D.NEIGHBOURS[nb] + ' gave LINE CLEAR.', 'bot'); render(); }, 2.5 * 1000 + 4500);
           return;
         }
-        if (code === '2' && n.out === 'accepted') {
-          n.out = 'section'; botRing(nb, '2', 1.5);
-          later(() => { botRing(nb, '2-1', 0); n.out = 'idle'; sBI(); render(); }, rand(25, 35) * 1000);
-          return;
+        if (code === '2' && (n.out === 'accepted' || n.out === 'section')) {
+          botRing(nb, '2', 1.5); return;
         }
-        if (code === '2-1' && n.in === 'await21') { n.in = 'idle'; botRing(nb, '2-1', 1.5); return; }
+        if (code === '2-1' && n.in === 'await21') { n.rang21 = true; botRing(nb, '2-1', 1.5); log('Now set the instrument to LINE BLOCKED.', 'info'); return; }
         if (code === '3-5') { n.out = 'idle'; botRing(nb, '3-5', 1.5); return; }
         if (D.CODES[code]) botRing(nb, code, 1.5); else log(D.NEIGHBOURS[nb] + ' does not understand that.', 'bot');
+      }
+
+      /* ------------------------------------------------------ instruments */
+      function giveClear(nb) {
+        ctx(); const n = block[nb];
+        if (n.in !== 'accepted') { sRefuse(); msg('Nothing to give LINE CLEAR to: accept a train on the bell first.', true); return; }
+        n.biIn = 'clear'; sNeedle(); msg('', false); render();
+        later(() => { botRing(nb, '2', 0); n.in = 'section'; n.biIn = 'train'; sNeedle(); log(D.NEIGHBOURS[nb] + ': train entering section. It will take a while to reach you.', 'bot'); spawn(nb, rand(55, 80) * 1000 * SP); render(); }, rand(8, 12) * 1000 * SP);
+      }
+      function setBlocked(nb) {
+        ctx(); const n = block[nb];
+        if (n.in === 'await21' && n.rang21) { n.in = 'idle'; n.biIn = 'blocked'; n.rang21 = false; sNeedle(); msg('', false); render(); return; }
+        sRefuse(); msg(n.in === 'await21' ? 'Send 2-1 first, then LINE BLOCKED.' : 'The section is not ready to be blocked.', true);
+      }
+      function trainOnLine(nb) {
+        ctx(); const n = block[nb];
+        if (n.out !== 'accepted') { sRefuse(); msg('You have no line clear to ' + D.NEIGHBOURS[nb] + '.', true); return; }
+        n.out = 'section'; n.biOut = 'train'; sNeedle(); msg('', false); render();
+        later(() => { botRing(nb, '2-1', 0); n.out = 'idle'; n.biOut = 'blocked'; sNeedle(); log(D.NEIGHBOURS[nb] + ' gave TRAIN OUT OF SECTION.', 'bot'); render(); }, rand(50, 70) * 1000 * SP);
       }
 
       /* ---------------------------------------------------------- traffic */
@@ -214,14 +264,14 @@
         }
         later(startOffer, rand(40, 80) * 1000);
       }
-      function spawn(nb) {
+      function spawn(nb, delay) {
         const n = block[nb], j = n.offer.journey, jd = D.JOURNEYS[j];
         const t = { id: nextId++, journey: j, cls: n.offer.cls, from: nb, leg: 0, state: 'approach', cur: jd.approach, gone: false, wait: 0, exitTo: null, exitOk: false };
         const tryPlace = () => {
           if (occ[jd.approach]) { later(tryPlace, 3000); return; }
           occ[jd.approach] = t.id; trains.push(t); n.offer = null; setExit(t); render();
         };
-        tryPlace();
+        later(tryPlace, delay || 0);
       }
       function setExit(t) {
         const jd = D.JOURNEYS[t.journey];
@@ -240,22 +290,22 @@
             const r = D.ROUTES[t.sig];
             if (t.pi >= r.tcs.length) {
               t.leg++; t.state = 'approach';
-              if (t.leg >= jd.legs.length) { t.gone = true; later(() => { release(t.cur, t.id); render(); }, 3000); finish(t, r); }
+              if (t.leg >= jd.legs.length) { t.gone = true; later(() => { release(t.cur, t.id); render(); }, (MOVE + 1) * 1000); finish(t, r); }
               render(); return;
             }
             const next = r.tcs[t.pi];
             if (occ[next] && occ[next] !== t.id) { return; }
             if (t.pi === 0) { cleared[t.sig] = false; if (t.leg === 0) leftApproach(t); }
             occ[next] = t.id;
-            const old = t.cur; t.cur = next; t.pi++; t.wait = 3;
-            later(() => { release(old, t.id); render(); }, 3500);
+            const old = t.cur; t.cur = next; t.pi++; t.wait = MOVE;
+            later(() => { release(old, t.id); render(); }, (MOVE + 1) * 1000);
             render(); return;
           }
           if (t.state === 'dwell') { if (--t.wait <= 0) { t.leg++; t.state = 'approach'; } render(); return; }
           const leg = jd.legs[t.leg];
           if (leg === undefined) return;
-          if (typeof leg === 'object') { t.state = 'dwell'; t.wait = leg.dwell; return; }
-          if (cleared[leg] && lever[leg]) { t.state = 'moving'; t.sig = leg; t.pi = 0; t.wait = 2; }
+          if (typeof leg === 'object') { t.state = 'dwell'; t.wait = Math.max(1, Math.round(leg.dwell * (window.__sbFast ? 0.1 : 1))); return; }
+          if (cleared[leg] && lever[leg]) { t.state = 'moving'; t.sig = leg; t.pi = 0; t.wait = 5; }
         });
         trains = trains.filter((t) => !t.gone || Object.values(occ).includes(t.id));
         render();
@@ -297,21 +347,44 @@
       const frame = el('div', { class: 'kx-sb-frame' });
       const levBtn = {};
       const ids = Object.keys(D.SIGNALS).concat(Object.keys(D.POINTS), D.SPARE).map(Number).sort((a, b) => a - b);
+      const fplBtn = {};
       ids.forEach((id) => {
         const kind = id in D.SIGNALS ? 'sig' : id in D.POINTS ? 'pt' : 'spare';
-        const b = el('button', { type: 'button', class: 'kx-sb-lever kx-sb-l' + kind, text: String(id), title: (kind === 'sig' ? 'Signal ' : kind === 'pt' ? 'Points ' : 'Spare lever ') + id });
-        if (kind !== 'spare') b.addEventListener('click', () => pull(id)); else b.disabled = true;
-        levBtn[id] = b; frame.appendChild(b);
+        const bt = el('button', { type: 'button', class: 'kx-sb-lever kx-sb-l' + kind, text: String(id), title: (kind === 'sig' ? 'Signal ' : kind === 'pt' ? 'Points ' : 'Spare lever ') + id });
+        if (kind !== 'spare') bt.addEventListener('click', () => pull(id)); else bt.disabled = true;
+        levBtn[id] = bt;
+        const cell = el('div', { class: 'kx-sb-cell' }, bt);
+        if (kind === 'pt' && (D.FPL || []).includes(id)) {
+          const f = el('button', { type: 'button', class: 'kx-sb-fpl', text: 'FPL', title: 'Facing point lock for points ' + id, onclick: () => pullFpl(id) });
+          fplBtn[id] = f; cell.appendChild(f);
+        }
+        frame.appendChild(cell);
       });
 
       const blockPanel = el('div', { class: 'kx-sb-block' });
       const blockRows = {};
+      const NEEDLE = { clear: -52, blocked: 0, train: 52 };
+      const LABEL = { clear: 'LINE CLEAR', blocked: 'LINE BLOCKED', train: 'TRAIN ON LINE' };
+      function dial(title) {
+        const needle = el('div', { class: 'kx-sb-needle' });
+        const lab = el('div', { class: 'kx-sb-dial-label' });
+        const face = el('div', { class: 'kx-sb-dial' }, el('div', { class: 'kx-sb-zone kx-sb-z-clear' }), el('div', { class: 'kx-sb-zone kx-sb-z-blocked' }), el('div', { class: 'kx-sb-zone kx-sb-z-train' }), needle, el('div', { class: 'kx-sb-hub' }));
+        return { root: el('div', { class: 'kx-sb-bi' }, el('div', { class: 'kx-sb-bi-title', text: title }), face, lab), needle, lab };
+      }
       Object.keys(D.NEIGHBOURS).forEach((nb) => {
+        const nm = D.NEIGHBOURS[nb];
         const status = el('span', { class: 'kx-sb-status' });
-        const key = el('button', { type: 'button', class: 'kx-btn kx-sb-key', text: 'Bell ' + D.NEIGHBOURS[nb], title: 'Tap the beats. Pause between groups.', onclick: () => beat(nb) });
+        const key = el('button', { type: 'button', class: 'kx-btn kx-sb-key', text: 'Bell ' + nm, title: 'Tap the beats. Pause between groups. Key: ' + (D.KEYS ? D.KEYS[nb] : ''), onclick: () => beat(nb) });
         const pend = el('span', { class: 'kx-sb-pend' });
-        blockRows[nb] = { status, pend };
-        blockPanel.appendChild(el('div', { class: 'kx-sb-brow' }, el('strong', { text: D.NEIGHBOURS[nb] }), status, pend, key));
+        const dIn = dial('From ' + nm), dOut = dial('To ' + nm);
+        const bClear = el('button', { type: 'button', class: 'kx-btn', text: 'Line clear', onclick: () => giveClear(nb) });
+        const bBlocked = el('button', { type: 'button', class: 'kx-btn', text: 'Line blocked', onclick: () => setBlocked(nb) });
+        const bTrain = el('button', { type: 'button', class: 'kx-btn', text: 'Train on line', onclick: () => trainOnLine(nb) });
+        blockRows[nb] = { status, pend, dIn, dOut };
+        blockPanel.appendChild(el('div', { class: 'kx-sb-brow' },
+          el('div', { class: 'kx-sb-bcol' }, el('strong', { text: nm }), status, el('div', { class: 'kx-sb-bbtns' }, key, pend)),
+          el('div', { class: 'kx-sb-bcol' }, dIn.root, el('div', { class: 'kx-sb-bbtns' }, bClear, bBlocked)),
+          el('div', { class: 'kx-sb-bcol' }, dOut.root, el('div', { class: 'kx-sb-bbtns' }, bTrain))));
       });
       const trainList = el('div', { class: 'kx-sb-trains' });
       const mute = el('button', { type: 'button', class: 'kx-btn', text: 'Sound on', onclick: () => { muted = !muted; mute.textContent = muted ? 'Sound off' : 'Sound on'; } });
@@ -330,13 +403,18 @@
         });
         Object.keys(ptEls).forEach((k) => { ptEls[k].classList.toggle('kx-sb-rev', !!lever[k]); levBtn[k].classList.toggle('kx-sb-pulled', !!lever[k]); });
         Object.keys(tcEls).forEach((k) => tcEls[k].classList.toggle('kx-sb-occ', !!occ[k]));
+        Object.keys(fplBtn).forEach((k) => { fplBtn[k].classList.toggle('kx-sb-on', !!fpl[k]); });
+        Object.keys(ptEls).forEach((k) => ptEls[k].classList.toggle('kx-sb-fpl-on', !!fpl[k]));
         Object.keys(block).forEach((nb) => {
           const b = block[nb], r = blockRows[nb];
-          const names = { idle: 'idle', calling: 'calling you', attn: 'attention', offered: 'offering a train', accepted: 'train accepted', section: 'train in section', await21: 'waiting for 2-1' };
-          const outn = { idle: 'line blocked', accepted: 'LINE CLEAR', section: 'TRAIN ON LINE' };
-          r.status.textContent = 'In: ' + names[b.in] + ' · Out: ' + outn[b.out];
-          r.status.classList.toggle('kx-sb-hot', b.in === 'calling' || b.in === 'offered');
+          const names = { idle: 'idle', calling: 'calling you', attn: 'attention', offered: 'offering a train', accepted: 'accepted: give LINE CLEAR', section: 'train on its way', await21: 'train arrived: send 2-1' };
+          r.status.textContent = names[b.in];
+          r.status.classList.toggle('kx-sb-hot', b.in === 'calling' || b.in === 'offered' || b.in === 'accepted');
           r.pend.textContent = beats[nb].groups.length ? beats[nb].groups.join('-') + '…' : '';
+          [[r.dIn, b.biIn], [r.dOut, b.biOut]].forEach(([d, state]) => {
+            d.needle.style.transform = 'rotate(' + NEEDLE[state] + 'deg)';
+            d.lab.textContent = LABEL[state];
+          });
         });
         trainList.textContent = '';
         const live = trains.filter((t) => !t.gone);
@@ -370,4 +448,5 @@
       later(startOffer, 6000);
     }
   });
+  };
 })();

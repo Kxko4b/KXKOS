@@ -1454,3 +1454,23 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-kxearch-live-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #222; }
 .kx-kxearch-live-name { font-weight: bold; padding: 0 6px; }
 .kx-kxearch-live-game { font-size: 12px; color: #55607a; padding: 0 6px; }
+
+/* Block instruments + FPL */
+.kx-sb-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.kx-sb-fpl { font: bold 9px monospace; width: 36px; padding: 1px 0; background: #5a6a82; color: #fff; border: 2px solid var(--kx-ink, #1b2a49); cursor: pointer; }
+.kx-sb-fpl.kx-sb-on { background: #2f8f4a; }
+.kx-sb-pt.kx-sb-fpl-on { box-shadow: 0 0 0 3px #2f8f4a; }
+.kx-sb-brow { align-items: flex-start; border-top: 1px dashed #c9bd98; }
+.kx-sb-brow:first-child { border-top: 0; }
+.kx-sb-bcol { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.kx-sb-bcol:first-child { align-items: flex-start; min-width: 130px; }
+.kx-sb-bbtns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.kx-sb-bi-title { font-size: 11px; text-align: center; color: #55607a; }
+.kx-sb-dial { position: relative; width: 120px; height: 66px; overflow: hidden; background: #f4ecd2; border: 2px solid var(--kx-ink, #1b2a49); border-radius: 60px 60px 4px 4px; }
+.kx-sb-zone { position: absolute; bottom: 0; left: 50%; width: 50%; height: 100%; transform-origin: 0 100%; opacity: .35; }
+.kx-sb-z-clear { background: #38c15a; transform: rotate(-90deg) skewY(60deg); }
+.kx-sb-z-blocked { background: #c0262c; transform: rotate(-15deg) skewY(60deg); width: 0; }
+.kx-sb-z-train { background: #c0262c; transform: rotate(30deg) skewY(60deg); }
+.kx-sb-needle { position: absolute; bottom: 2px; left: calc(50% - 2px); width: 4px; height: 52px; background: #1b2a49; transform-origin: 50% 100%; transition: transform .5s cubic-bezier(.3,1.6,.5,1); border-radius: 2px; }
+.kx-sb-hub { position: absolute; bottom: -5px; left: calc(50% - 6px); width: 12px; height: 12px; border-radius: 50%; background: #1b2a49; }
+.kx-sb-dial-label { font: bold 10px monospace; text-align: center; }

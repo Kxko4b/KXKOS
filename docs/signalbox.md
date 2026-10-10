@@ -19,3 +19,10 @@ App id `signalbox` (desktop icon "Percstown Signal Box"). Diagram: `assets/percs
 
 ## Status
 The locking table is a DRAFT worked out from the picture. Signals without a route (1, 9, 25, 26, 29, 34, 37, 38, 40) move freely and are not interlocked yet.
+
+## Update: instruments, FPL, pacing
+- Each neighbour has its own bell sound (Riceville ding, Samthon deep gong, Bighton two-tone).
+- Block instruments (BI): two dials per neighbour. "From X" is yours: press LINE CLEAR after accepting a train on the bell; press LINE BLOCKED after ringing 2-1. "To X": the other box gives LINE CLEAR; press TRAIN ON LINE when your train has gone (after ringing 2).
+- Trains are slow: after the neighbour rings 2 the train takes 55-80 s to reach your approach circuit, then about 9 s per track circuit.
+- FPL: every point in `FPL` has an FPL button under its lever. Apply it after moving the points; a signal will not clear without it, and points cannot move while it is applied.
+- A box is registered with `KX.registerSignalBox(...)`; Percstown is the first (`signalbox-data.js`).

@@ -31,13 +31,13 @@
 
   // A route is what a signal lever, once pulled, sets up. dir: 'up' (towards Samthon/Bighton) or 'down'.
   const ROUTES = {
-    2: { name: 'Up Main', dir: 'up', pts: { 10: 'N', 11: 'N', 15: 'N', 16: 'N' }, tcs: ['AB', 'AC'] },
+    2: { name: 'Up Main', dir: 'up', pts: { 11: 'N', 13: 'N', 16: 'N' }, tcs: ['AB', 'AC'] },
     3: { name: 'Up Main, through the platforms', dir: 'up', pts: {}, tcs: ['AD'] },
     4: { name: 'Up Main to Samthon', dir: 'up', pts: {}, tcs: ['AE'], exit: 'samthon' },
-    5: { name: 'Up Main to Platform 1', dir: 'up', pts: { 15: 'R', 16: 'R' }, tcs: ['AB', 'EA'] },
-    7: { name: 'Crossover to Down Main', dir: 'up', pts: { 10: 'R', 11: 'R' }, tcs: ['AB', 'BD'] },
+    5: { name: 'Up Main, diverging through 13 to the platform lines', dir: 'up', pts: { 11: 'N', 13: 'R', 16: 'N' }, tcs: ['AB', 'BC'] },
+    7: { name: 'Up Main to Platform 1', dir: 'up', pts: { 11: 'N', 13: 'N', 16: 'R' }, tcs: ['AB', 'EA'] },
     36: { name: 'Down Main from Samthon', dir: 'down', pts: {}, tcs: ['BB'] },
-    35: { name: 'Down Main through the station', dir: 'down', pts: { 10: 'N', 11: 'N', 24: 'N' }, tcs: ['BC', 'BD', 'BE'] },
+    35: { name: 'Down Main through the station', dir: 'down', pts: { 11: 'N', 24: 'N' }, tcs: ['BC', 'BD', 'BE'] },
     33: { name: 'Down Main to Riceville', dir: 'down', pts: {}, tcs: ['BF'], exit: 'riceville' },
     41: { name: 'Branch to Platform 5', dir: 'down', pts: { 27: 'N', 28: 'N' }, tcs: ['CB', 'CC'] },
     39: { name: 'Branch to Platform 4', dir: 'down', pts: { 27: 'R', 28: 'R' }, tcs: ['DA'] },
@@ -51,8 +51,8 @@
   const JOURNEYS = {
     A: { from: 'riceville', approach: 'AA', legs: [2, 3, 4], label: 'Up Main to Samthon' },
     B: { from: 'samthon', approach: 'BA', legs: [36, 35, 33], label: 'Down Main to Riceville' },
-    C: { from: 'bighton', approach: 'CA', legs: [41, { dwell: 15 }, 8], label: 'Platform 5, reverses to Bighton' },
-    D: { from: 'bighton', approach: 'CA', legs: [39, { dwell: 15 }, 6], label: 'Platform 4, reverses to Bighton' }
+    C: { from: 'bighton', approach: 'CA', legs: [41, { dwell: 45 }, 8], label: 'Platform 5, reverses to Bighton' },
+    D: { from: 'bighton', approach: 'CA', legs: [39, { dwell: 45 }, 6], label: 'Platform 4, reverses to Bighton' }
   };
 
   const NEIGHBOURS = { riceville: 'Riceville', samthon: 'Samthon', bighton: 'Bighton Jn' };
@@ -82,5 +82,14 @@
   };
   Object.keys(CLASSES).forEach((k) => { CODES[CLASSES[k].code] = 'Is line clear for ' + CLASSES[k].name + '?'; });
 
-  KX.signalboxData = { SIGNALS, POINTS, POINT_TC, TCS, ROUTES, SPARE, JOURNEYS, NEIGHBOURS, CLASSES, CODES, W: 2000, H: 443 };
+  // Different bell per neighbour (frequency in Hz and timbre).
+  const BELLS = { riceville: { f: 1245, style: 'ding' }, samthon: { f: 740, style: 'gong' }, bighton: { f: 1040, style: 'dingdong' } };
+  const KEYS = { riceville: 'R', samthon: 'S', bighton: 'B' };
+  // Points that carry a facing point lock (FPL button under the lever). A signal needs the FPL on every listed point of its route.
+  const FPL = [11, 13, 16, 15, 12, 10, 17, 18, 19, 20, 21, 23, 24, 27, 28, 30, 31, 32];
+
+  KX.registerSignalBox({
+    id: 'signalbox', title: 'Percstown Signal Box', image: 'assets/percstown.png', order: 31,
+    data: { SIGNALS, POINTS, POINT_TC, TCS, ROUTES, SPARE, JOURNEYS, NEIGHBOURS, CLASSES, CODES, BELLS, KEYS, FPL, MOVE_SECONDS: 9, W: 2000, H: 443 }
+  });
 })();
