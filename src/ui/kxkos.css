@@ -1487,3 +1487,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-piano-key.kx-black { bottom: 38%; background: #1b2a49; border: 2px solid #1b2a49; z-index: 2; }
 .kx-piano-key.kx-down { background: var(--kx-accent, #3b7ddd); }
 .kx-piano-key span { pointer-events: none; }
+.kx-piano-key .kx-piano-cap { position: absolute; bottom: 20px; font-size: 10px; opacity: .55; pointer-events: none; }
+.kx-piano-key.kx-black .kx-piano-cap { bottom: 8px; color: #fff6dc; opacity: .7; }
+.kx-piano-key .kx-piano-oct { pointer-events: none; }

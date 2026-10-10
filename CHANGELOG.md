@@ -5,6 +5,7 @@
 
 ## Unreleased: Piano
 - New Piano app: three-octave keyboard (mouse, touch, computer keys), four sounds, sustain, volume, record and play back.
+- Piano: octave shift (Arrow Up/Down, Page Up/Down or buttons) from C0 up, and the computer key letters are shown on the keys.
 - Lime Street has no FPL (Westinghouse power frame).
 
 ## Unreleased: Lime Street signal box (draft)

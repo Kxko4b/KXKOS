@@ -4,13 +4,15 @@
   const KX = window.KXKOS;
   const { el } = KX;
   const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const START = 48;                      // C3
+  const MIN_BASE = 12, MAX_BASE = 84;    // lowest visible key can be C0 .. C6
   const COUNT = 37;                      // three octaves + C
   // Computer keyboard: bottom row is the lower octave, top row the upper one.
   const LOW = 'zsxdcvgbhnjm,l.;/', HIGH = 'q2w3er5t6y7ui9o0p[=]';
-  const KEYMAP = {};
-  LOW.split('').forEach((k, i) => { KEYMAP[k] = START + 12 + i; });
-  HIGH.split('').forEach((k, i) => { KEYMAP[k] = START + 24 + i; });
+  const KEYMAP = {};                     // computer key -> semitones above the lowest visible key
+  LOW.split('').forEach((k, i) => { KEYMAP[k] = 12 + i; });
+  HIGH.split('').forEach((k, i) => { KEYMAP[k] = 24 + i; });
+  const KEYCHAR = {};                    // offset -> label
+  Object.keys(KEYMAP).forEach((k) => { KEYCHAR[KEYMAP[k]] = k.toUpperCase(); });
   const isBlack = (m) => NAMES[m % 12].length === 2;
   const freq = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -18,7 +20,8 @@
     id: 'piano', title: 'Piano', icon: 'piano', width: 820, height: 380, minWidth: 560, minHeight: 300,
     desktop: true, order: 72,
     launch(win) {
-      let ac = null, master = null, sustain = false, sound = 'piano';
+      let ac = null, master = null, sustain = false, sound = 'piano', base = 48;
+      const heldKeys = {};               // computer key -> midi it started, so octave changes never leave notes stuck
       const live = {};                   // midi -> {osc nodes, gain}
       const held = new Set();            // notes whose key is still down while sustain is on
       let rec = null, recStart = 0, tape = [], playTimers = [];
@@ -63,19 +66,33 @@
 
       // ---- UI
       const keysEl = el('div', { class: 'kx-piano-keys' });
-      const keyEls = {};
-      const whites = [];
-      for (let m = START; m < START + COUNT; m++) if (!isBlack(m)) whites.push(m);
-      const ww = 100 / whites.length;
-      whites.forEach((m, i) => {
-        const k = el('div', { class: 'kx-piano-key', style: 'left:' + (i * ww) + '%;width:' + ww + '%', title: NAMES[m % 12] + (Math.floor(m / 12) - 1) });
-        if (m % 12 === 0) k.appendChild(el('span', { text: 'C' + (Math.floor(m / 12) - 1) }));
-        keyEls[m] = k; keysEl.appendChild(k);
-      });
-      for (let m = START; m < START + COUNT; m++) if (isBlack(m)) {
-        const idx = whites.indexOf(m - 1);
-        const k = el('div', { class: 'kx-piano-key kx-black', style: 'left:' + ((idx + 1) * ww - ww * 0.3) + '%;width:' + (ww * 0.6) + '%', title: NAMES[m % 12] + (Math.floor(m / 12) - 1) });
-        keyEls[m] = k; keysEl.appendChild(k);
+      let keyEls = {};
+      function build() {
+        keysEl.textContent = '';
+        keyEls = {};
+        const whites = [];
+        for (let m = base; m < base + COUNT; m++) if (!isBlack(m)) whites.push(m);
+        const ww = 100 / whites.length;
+        const label = (k, m) => {
+          const c = KEYCHAR[m - base];
+          if (m % 12 === 0) k.appendChild(el('span', { class: 'kx-piano-oct', text: 'C' + (Math.floor(m / 12) - 1) }));
+          if (c) k.appendChild(el('span', { class: 'kx-piano-cap', text: c }));
+        };
+        whites.forEach((m, i) => {
+          const k = el('div', { class: 'kx-piano-key', style: 'left:' + (i * ww) + '%;width:' + ww + '%', title: NAMES[m % 12] + (Math.floor(m / 12) - 1) });
+          label(k, m); keyEls[m] = k; keysEl.appendChild(k);
+        });
+        for (let m = base; m < base + COUNT; m++) if (isBlack(m)) {
+          const idx = whites.indexOf(m - 1);
+          const k = el('div', { class: 'kx-piano-key kx-black', style: 'left:' + ((idx + 1) * ww - ww * 0.3) + '%;width:' + (ww * 0.6) + '%', title: NAMES[m % 12] + (Math.floor(m / 12) - 1) });
+          label(k, m); keyEls[m] = k; keysEl.appendChild(k);
+        }
+        Object.keys(live).forEach((m) => mark(+m, true));
+      }
+      function shift(d) {
+        const nb = Math.max(MIN_BASE, Math.min(MAX_BASE, base + d * 12));
+        if (nb === base) return;
+        base = nb; build(); octLabel.textContent = 'Octave: C' + (Math.floor(base / 12) - 1) + ' to C' + (Math.floor(base / 12) + 2);
       }
       function mark(m, v) { if (keyEls[m]) keyEls[m].classList.toggle('kx-down', v); }
 
@@ -86,11 +103,14 @@
       const up = () => { if (pointer !== null) { release(pointer); pointer = null; } };
       keysEl.addEventListener('pointerup', up); keysEl.addEventListener('pointercancel', up);
 
-      const soundSel = el('select', { class: 'kx-brief-input', onchange: () => { sound = soundSel.value; } },
+      const soundSel = el('select', { class: 'kx-brief-input', onchange: () => { sound = soundSel.value; keysEl.focus(); } },
         ...[['piano', 'Piano'], ['organ', 'Organ'], ['bell', 'Bell'], ['square', 'Chiptune']].map(([v, t]) => el('option', { value: v, text: t })));
       const vol = el('input', { type: 'range', min: '0', max: '100', value: '50', oninput: () => { audio(); master.gain.value = vol.value / 100; } });
       const sus = el('button', { type: 'button', class: 'kx-btn', text: 'Sustain (Space)', onclick: () => setSustain(!sustain) });
-      const status = el('span', { class: 'kx-piano-status', text: 'Play with the mouse or keys Z to M and Q to U.' });
+      const octLabel = el('span', { class: 'kx-piano-status', text: 'Octave: C3 to C6' });
+      const octDown = el('button', { type: 'button', class: 'kx-btn', text: 'Octave −', title: 'Arrow Down or Page Down', onclick: () => shift(-1) });
+      const octUp = el('button', { type: 'button', class: 'kx-btn', text: 'Octave +', title: 'Arrow Up or Page Up', onclick: () => shift(1) });
+      const status = el('span', { class: 'kx-piano-status', text: 'Play with the mouse or the lettered keys. Arrow Up / Down move the octave.' });
       const recBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Record', onclick: toggleRec });
       const playBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Play', onclick: playTape });
 
@@ -107,24 +127,29 @@
         playTimers.push(setTimeout(() => { status.textContent = 'Done.'; }, tape[tape.length - 1].t + 400));
       }
 
+      build();
+      keysEl.tabIndex = 0; keysEl.style.outline = 'none';
       win.body.appendChild(el('div', { class: 'kx-piano' },
-        el('div', { class: 'kx-piano-bar' }, soundSel, el('label', { class: 'kx-piano-vol' }, 'Volume', vol), sus, recBtn, playBtn, status),
+        el('div', { class: 'kx-piano-bar' }, soundSel, el('label', { class: 'kx-piano-vol' }, 'Volume', vol), sus, octDown, octUp, octLabel, recBtn, playBtn, status),
         keysEl));
 
       const alive = () => win.body.isConnected;
+      setTimeout(() => keysEl.focus(), 50);
       function kd(e) {
         if (!alive()) { document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); return; }
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (!win.body.contains(document.activeElement) && document.activeElement !== document.body) return;
         if (e.target.matches && e.target.matches('input,select,textarea')) return;
         if (e.key === ' ') { e.preventDefault(); if (!e.repeat) setSustain(true); return; }
-        const m = KEYMAP[e.key.toLowerCase()];
-        if (m !== undefined && !e.repeat) press(m);
+        if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); if (!e.repeat) shift(1); return; }
+        if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); if (!e.repeat) shift(-1); return; }
+        const k = e.key.toLowerCase(), o = KEYMAP[k];
+        if (o !== undefined && !e.repeat && heldKeys[k] === undefined) { heldKeys[k] = base + o; press(base + o); }
       }
       function ku(e) {
-        if (e.key === ' ') { setSustain(false); return; }
-        const m = KEYMAP[e.key.toLowerCase()];
-        if (m !== undefined) release(m);
+        if (e.key === ' ') { e.preventDefault(); setSustain(false); return; }
+        const k = e.key.toLowerCase();
+        if (heldKeys[k] !== undefined) { release(heldKeys[k]); delete heldKeys[k]; }
       }
       document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
       win.onClose = () => { stopPlay(); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); if (ac) ac.close(); };
