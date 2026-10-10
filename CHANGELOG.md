@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased: Screensaver
+- Idle screensaver (core/screensaver.js).
+
 ## Unreleased: Piano
 - New Piano app: three-octave keyboard (mouse, touch, computer keys), four sounds, sustain, volume, record and play back.
 - Lime Street has no FPL (Westinghouse power frame).
