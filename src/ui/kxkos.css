@@ -1474,3 +1474,5 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-sb-needle { position: absolute; bottom: 2px; left: calc(50% - 2px); width: 4px; height: 52px; background: #1b2a49; transform-origin: 50% 100%; transition: transform .5s cubic-bezier(.3,1.6,.5,1); border-radius: 2px; }
 .kx-sb-hub { position: absolute; bottom: -5px; left: calc(50% - 6px); width: 12px; height: 12px; border-radius: 50%; background: #1b2a49; }
 .kx-sb-dial-label { font: bold 10px monospace; text-align: center; }
+.kx-sb-zone { display: none; }
+.kx-sb-dial { background: conic-gradient(from -90deg at 50% 100%, rgba(56,193,90,.4) 0 64deg, rgba(247,216,74,.4) 64deg 116deg, rgba(192,38,44,.4) 116deg 180deg); }
