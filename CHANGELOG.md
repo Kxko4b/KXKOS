@@ -1,8 +1,5 @@
 # Changelog
 
-## Unreleased: Mines
-- New Mines game (minesweeper-style): three sizes, safe first click, flags (right click, long press or flag mode), timer.
-
 ## Unreleased: Screensaver
 - Idle screensaver (core/screensaver.js).
 
