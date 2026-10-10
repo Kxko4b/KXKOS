@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased: Lime Street signal box (draft)
+- Second signal box on the shared engine; engine now takes bell keys, title and image from the data file.
+
 ## Unreleased
 
 - KXEARCH Twitch home: "Live now" grid from the worker route `/twitch/streams` (needs the `TWITCH_CLIENT_SECRET` worker secret; Client ID is built in).

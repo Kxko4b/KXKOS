@@ -323,7 +323,7 @@
 
       /* ------------------------------------------------------------- UI */
       const diagram = el('div', { class: 'kx-sb-diagram', style: 'aspect-ratio:' + D.W + '/' + D.H });
-      diagram.appendChild(el('img', { class: 'kx-sb-img', src: IMG, alt: 'Percstown diagram', draggable: 'false' }));
+      diagram.appendChild(el('img', { class: 'kx-sb-img', src: IMG, alt: cfg.title, draggable: 'false' }));
       const sigEls = {}, ptEls = {}, tcEls = {};
       Object.keys(D.TCS).forEach((k) => {
         const [x, y] = D.TCS[k];
@@ -426,7 +426,7 @@
         });
       }
 
-      const top = el('div', { class: 'kx-embed-bar' }, el('strong', { text: 'Percstown' }), el('span', { class: 'kx-embed-spacer' }), codesBtn, mute);
+      const top = el('div', { class: 'kx-embed-bar' }, el('strong', { text: cfg.title.replace(' Signal Box', '') }), el('span', { class: 'kx-embed-spacer' }), codesBtn, mute);
       const lower = el('div', { class: 'kx-sb-lower' },
         el('div', { class: 'kx-sb-col' }, blockPanel, trainList),
         el('div', { class: 'kx-sb-col' }, logBox));
@@ -438,11 +438,11 @@
       function onKey(e) {
         if (!alive()) { document.removeEventListener('keydown', onKey); return; }
         if (!win.body.contains(document.activeElement) && document.activeElement !== document.body) return;
-        const map = { r: 'riceville', s: 'samthon', b: 'bighton' };
-        if (!e.repeat && map[e.key]) beat(map[e.key]);
+        const nb = Object.keys(D.KEYS || {}).find((k) => D.KEYS[k].toLowerCase() === e.key.toLowerCase());
+        if (!e.repeat && nb) beat(nb);
       }
 
-      log('Percstown signal box. Keys R / S / B ring the bell to Riceville / Samthon / Bighton. A train will be offered shortly.', 'info');
+      log(cfg.title + '. Bell keys: ' + Object.keys(D.KEYS).map((k) => D.KEYS[k] + ' = ' + D.NEIGHBOURS[k]).join(', ') + '. A train will be offered shortly.', 'info');
       render();
       const iv = setInterval(() => { if (!alive()) { clearInterval(iv); return; } tick(); }, 1000);
       later(startOffer, 6000);

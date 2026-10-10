@@ -26,3 +26,7 @@ The locking table is a DRAFT worked out from the picture. Signals without a rout
 - Trains are slow: after the neighbour rings 2 the train takes 55-80 s to reach your approach circuit, then about 9 s per track circuit.
 - FPL: every point in `FPL` has an FPL button under its lever. Apply it after moving the points; a signal will not clear without it, and points cannot move while it is applied.
 - A box is registered with `KX.registerSignalBox(...)`; Percstown is the first (`signalbox-data.js`).
+
+## Lime Street (draft)
+
+`src/apps/signalbox/limestreet-data.js` registers a second box, "Lime Street Signal Box", on the same engine, with Edge Hill as the neighbour (bell key E). This first version is a simplified DRAFT: four approach roads to platforms 9, 8, 5 and 4 with points 7, 8, 11 and 14. Signal, point and track-circuit positions are estimates and the interlocking does not yet follow the full diagram. Correct it by editing the data file.
