@@ -72,6 +72,9 @@
       '<rect x="3" y="7" width="26" height="18" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M10 7v18M16 7v18M22 7v18" stroke="' + INK + '" stroke-width="2"/>' +
       '<rect x="8" y="7" width="4" height="10" fill="' + INK + '"/><rect x="14" y="7" width="4" height="10" fill="' + INK + '"/><rect x="20" y="7" width="4" height="10" fill="' + INK + '"/>',
+    tiles:
+      '<rect x="3" y="3" width="26" height="26" rx="3" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<rect x="7" y="7" width="8" height="8" fill="#ffc772"/><rect x="17" y="7" width="8" height="8" fill="#ff7a5a"/><rect x="7" y="17" width="8" height="8" fill="#8fd6a5"/><rect x="17" y="17" width="8" height="8" fill="#4aa3c9"/>',
     clock:
       '<circle cx="16" cy="16" r="12" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M16 8v8l5 3" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',

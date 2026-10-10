@@ -1490,3 +1490,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-piano-key .kx-piano-cap { position: absolute; bottom: 20px; font-size: 10px; opacity: .55; pointer-events: none; }
 .kx-piano-key.kx-black .kx-piano-cap { bottom: 8px; color: #fff6dc; opacity: .7; }
 .kx-piano-key .kx-piano-oct { pointer-events: none; }
+
+/* Tiles */
+.kx-tiles { display: flex; flex-direction: column; gap: 8px; height: 100%; padding: 8px; background: var(--kx-panel, #fff6dc); box-sizing: border-box; }
+.kx-tiles-bar { display: flex; gap: 10px; align-items: center; justify-content: space-between; font-weight: bold; }
+.kx-tiles-score { font-family: monospace; }
+.kx-tiles-msg { min-height: 18px; font-size: 13px; color: var(--kx-accent, #3b7ddd); font-weight: bold; }
+.kx-tiles-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; background: #1b2a49; border: 3px solid #1b2a49; aspect-ratio: 1; max-height: calc(100% - 90px); align-self: center; width: 100%; box-sizing: border-box; outline: none; touch-action: none; }
+.kx-tiles-cell { display: flex; align-items: center; justify-content: center; background: #2c3c63; font: bold 26px monospace; }
+.kx-tiles-hint { font-size: 12px; opacity: .7; }

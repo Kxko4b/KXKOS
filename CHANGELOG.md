@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased: Tiles
+- New Tiles game (slide-and-merge on a 4x4 board): arrow keys, WASD or swipe, best score saved.
+
 ## Unreleased: Screensaver
 - Idle screensaver (core/screensaver.js).
 
