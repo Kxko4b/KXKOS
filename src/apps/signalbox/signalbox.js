@@ -167,6 +167,18 @@
         log(D.NEIGHBOURS[nb] + ' rings ' + code + meaning(code), who || 'bot');
       }
       const botRing = (nb, code, delay) => later(() => ringSeq(code, 'bot', nb), (delay || 0) * 1000);
+      // The adjacent box first calls attention (1). Once you answer 1 it rings the message; you repeat it to acknowledge and it does not ring it again.
+      function botSend(nb, code, then) {
+        const n = block[nb];
+        n.q = { code, then };
+        const attempt = (k) => {
+          if (!n.q || n.q.code !== code) return;
+          if (k === 0) { n.q = null; ringSeq(code, 'bot', nb); n.ack = code; later(() => { if (n.ack === code) n.ack = null; }, 30000); then(); return; }
+          ringSeq('1', 'bot', nb);
+          later(() => attempt(k - 1), 20000);
+        };
+        attempt(3);
+      }
 
       const beats = {};
       Object.keys(D.NEIGHBOURS).forEach((n) => { beats[n] = { groups: [], last: 0, timer: null }; });
@@ -190,6 +202,12 @@
       }
       function botHears(nb, code) {
         const n = block[nb];
+        if (n.ack === code) { n.ack = null; log(D.NEIGHBOURS[nb] + ' has your acknowledgement.', 'bot'); return; }
+        if (code === '1' && n.q) {
+          const q = n.q; n.q = null;
+          later(() => { ringSeq(q.code, 'bot', nb); n.ack = q.code; later(() => { if (n.ack === q.code) n.ack = null; }, 30000); q.then(); }, 1500);
+          return;
+        }
         if (code === '1') {
           if (n.in === 'calling') { n.in = 'attn'; later(() => offerCode(nb), 2000); return; }
           n.attn = Date.now(); botRing(nb, '1', 1.5); return;
@@ -224,7 +242,7 @@
         ctx(); const n = block[nb];
         if (n.in !== 'accepted') { sRefuse(); msg('Nothing to give LINE CLEAR to: accept a train on the bell first.', true); return; }
         n.biIn = 'clear'; sNeedle(); msg('', false); render();
-        later(() => { botRing(nb, '2', 0); n.in = 'section'; n.biIn = 'train'; sNeedle(); log(D.NEIGHBOURS[nb] + ': train entering section. It will take a while to reach you.', 'bot'); spawn(nb, rand(55, 80) * 1000 * SP); render(); }, rand(8, 12) * 1000 * SP);
+        later(() => botSend(nb, '2', () => { n.in = 'section'; n.biIn = 'train'; sNeedle(); log(D.NEIGHBOURS[nb] + ': train entering section. It will take a while to reach you.', 'bot'); spawn(nb, rand(55, 80) * 1000 * SP); render(); }), rand(8, 12) * 1000 * SP);
       }
       function setBlocked(nb) {
         ctx(); const n = block[nb];
@@ -235,7 +253,7 @@
         ctx(); const n = block[nb];
         if (n.out !== 'accepted') { sRefuse(); msg('You have no line clear to ' + D.NEIGHBOURS[nb] + '.', true); return; }
         n.out = 'section'; n.biOut = 'train'; sNeedle(); msg('', false); render();
-        later(() => { botRing(nb, '2-1', 0); n.out = 'idle'; n.biOut = 'blocked'; sNeedle(); log(D.NEIGHBOURS[nb] + ' gave TRAIN OUT OF SECTION.', 'bot'); render(); }, rand(50, 70) * 1000 * SP);
+        later(() => botSend(nb, '2-1', () => { n.out = 'idle'; n.biOut = 'blocked'; sNeedle(); log(D.NEIGHBOURS[nb] + ' gave TRAIN OUT OF SECTION.', 'bot'); render(); }), rand(50, 70) * 1000 * SP);
       }
 
       /* ---------------------------------------------------------- traffic */

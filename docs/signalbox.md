@@ -30,3 +30,6 @@ The locking table is a DRAFT worked out from the picture. Signals without a rout
 ## Lime Street (draft)
 
 `src/apps/signalbox/limestreet-data.js` registers a second box on the same engine. Edge Hill is two double-track pairs, so there are two neighbours, **Edge Hill 1** (bell key E, Down Slow signal 1, Up line exit 47) and **Edge Hill 2** (key W, Down Slow signal 3, Up Slow exit 69), each with its own bell sound and its own pair of block instruments. Trains arrive on the Down lines and leave on the Up lines. This is a simplified DRAFT: platforms 9, 8, 5 and 4, points 7, 8, 11 and 14. Positions are estimates and the interlocking does not yet follow the full diagram. Correct it by editing the data file.
+
+## Bell procedure for messages from the adjacent box
+2 (train entering section) and 2-1 (train out of section) now start with the neighbour ringing 1 (call attention). Answer 1 and it rings the message. Repeat the message to acknowledge it; the neighbour does not ring it again. If you do not answer, it calls attention up to three more times and then sends the message anyway.
