@@ -110,6 +110,10 @@
       const octLabel = el('span', { class: 'kx-piano-status', text: 'Octave: C3 to C6' });
       const octDown = el('button', { type: 'button', class: 'kx-btn', text: 'Octave −', title: 'Arrow Down or Page Down', onclick: () => shift(-1) });
       const octUp = el('button', { type: 'button', class: 'kx-btn', text: 'Octave +', title: 'Arrow Up or Page Up', onclick: () => shift(1) });
+      const songs = KX.pianoSongs || [];
+      const songSel = el('select', { class: 'kx-brief-input', onchange: () => songSel.blur() }, ...songs.map((x, i) => el('option', { value: String(i), text: x.title })));
+      const songBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Play song', onclick: playSong });
+      const stopBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Stop', onclick: () => { stopPlay(); status.textContent = 'Stopped.'; } });
       const status = el('span', { class: 'kx-piano-status', text: 'Play with the mouse or the lettered keys. Arrow Up / Down move the octave.' });
       const recBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Record', onclick: toggleRec });
       const playBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Play', onclick: playTape });
@@ -117,6 +121,36 @@
       function toggleRec() {
         if (rec) { rec = null; recBtn.textContent = 'Record'; status.textContent = tape.length ? 'Recorded ' + tape.filter((x) => x.down).length + ' notes.' : 'Nothing recorded.'; return; }
         stopPlay(); tape = []; rec = true; recStart = performance.now(); recBtn.textContent = 'Stop recording'; status.textContent = 'Recording…';
+      }
+      const DUR = { w: 4, h: 2, q: 1, e: 0.5, s: 0.25 };
+      const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+      function parseTrack(str, spb) {
+        const out = []; let beat = 0;
+        str.replace(/\|/g, ' ').split(/\s+/).filter(Boolean).forEach((tok) => {
+          const [n, d] = tok.split(':');
+          let len = 0;
+          const m = /^([whqes])(\.*)$/.exec(d || 'q');
+          if (m) { len = DUR[m[1]]; let add = len / 2; for (let i = 0; i < m[2].length; i++) { len += add; add /= 2; } }
+          else if (/^\d+$/.test(d)) len = +d;                       // plain beats, e.g. R:12
+          const nm = /^([A-G])(#|b)?(-?\d)$/.exec(n);
+          if (nm) out.push({ at: beat * spb, len: len * spb, m: (+nm[3] + 1) * 12 + SEMI[nm[1]] + (nm[2] === '#' ? 1 : nm[2] === 'b' ? -1 : 0) });
+          beat += len;
+        });
+        return out;
+      }
+      function playSong() {
+        const sg = songs[+songSel.value]; if (!sg) return;
+        if (rec) toggleRec();
+        stopPlay(); audio();
+        const spb = 60 / sg.bpm;
+        let end = 0;
+        sg.tracks.forEach((tr) => parseTrack(tr, spb).forEach((n) => {
+          end = Math.max(end, n.at + n.len);
+          playTimers.push(setTimeout(() => on(n.m, true), n.at * 1000));
+          playTimers.push(setTimeout(() => off(n.m, false, true), Math.max(60, n.len * 1000 * 0.92)  + n.at * 1000));
+        }));
+        status.textContent = 'Playing ' + sg.title + '…';
+        playTimers.push(setTimeout(() => { status.textContent = 'Done.'; }, end * 1000 + 600));
       }
       function stopPlay() { playTimers.forEach(clearTimeout); playTimers = []; Object.keys(live).forEach((m) => off(+m)); }
       function playTape() {
@@ -131,6 +165,7 @@
       keysEl.tabIndex = 0; keysEl.style.outline = 'none';
       win.body.appendChild(el('div', { class: 'kx-piano' },
         el('div', { class: 'kx-piano-bar' }, soundSel, el('label', { class: 'kx-piano-vol' }, 'Volume', vol), sus, octDown, octUp, octLabel, recBtn, playBtn, status),
+        el('div', { class: 'kx-piano-bar' }, songSel, songBtn, stopBtn),
         keysEl));
 
       const alive = () => win.body.isConnected;

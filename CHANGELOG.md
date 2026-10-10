@@ -5,6 +5,7 @@
 
 ## Unreleased: Piano
 - New Piano app: three-octave keyboard (mouse, touch, computer keys), four sounds, sustain, volume, record and play back.
+- Piano: song player with two public-domain sketches (Beethoven Sonatina in G, easy Danse macabre) in apps/piano/songs.js.
 - Piano: octave shift (Arrow Up/Down, Page Up/Down or buttons) from C0 up, and the computer key letters are shown on the keys.
 - Lime Street has no FPL (Westinghouse power frame).
 
