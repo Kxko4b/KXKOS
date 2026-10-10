@@ -72,6 +72,9 @@
       '<rect x="3" y="7" width="26" height="18" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M10 7v18M16 7v18M22 7v18" stroke="' + INK + '" stroke-width="2"/>' +
       '<rect x="8" y="7" width="4" height="10" fill="' + INK + '"/><rect x="14" y="7" width="4" height="10" fill="' + INK + '"/><rect x="20" y="7" width="4" height="10" fill="' + INK + '"/>',
+    mines:
+      '<rect x="3" y="3" width="26" height="26" rx="3" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<circle cx="16" cy="16" r="6" fill="' + INK + '"/><path d="M16 6v4M16 22v4M6 16h4M22 16h4M9 9l3 3M20 20l3 3M23 9l-3 3M9 23l3-3" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/>',
     clock:
       '<circle cx="16" cy="16" r="12" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M16 8v8l5 3" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',
