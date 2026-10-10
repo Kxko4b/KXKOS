@@ -5,9 +5,10 @@
   'use strict';
   const KX = window.KXKOS;
 
-  // Edge Hill has two double-track pairs, each with its own bell and block instrument pair:
-  //   Edge Hill 1: Down Slow (signal 1, trains come TO Lime Street) and the Up line beside it (exit signal 47)
-  //   Edge Hill 2: Down Slow (signal 3) and the Up Slow line (exit signal 69)
+  // Edge Hill has four tracks and two block sections, each with its own bell and block instruments:
+  //   Edge Hill Fast (top two tracks): Down Fast to Lime Street (signal 1), Up Fast back to Edge Hill (exit signal 47)
+  //   Edge Hill Slow (bottom two tracks): Down Slow to Lime Street (signal 3), Up Slow back to Edge Hill (exit signal 69)
+  // In each pair the upper track carries trains TO Lime Street and the lower one carries trains FROM it.
   const SIGNALS = { 1: [224, 284], 3: [223, 382], 5: [399, 282], 6: [399, 384], 47: [417, 336], 55: [1330, 306], 56: [1330, 341], 63: [1330, 409], 64: [1330, 443], 69: [645, 441] };
   const POINTS = { 7: [610, 300], 8: [742, 331], 11: [900, 380], 14: [766, 305] };
   const POINT_TC = { 7: 'A3', 8: 'B3', 11: 'C3', 14: 'D3' };
@@ -18,23 +19,23 @@
   };
   // dir 'down' = towards the platforms (from Edge Hill), 'up' = away to Edge Hill.
   const ROUTES = {
-    1: { name: 'Down Slow (Edge Hill 1) to Platform 9', dir: 'down', pts: { 7: 'N' }, tcs: ['A1', 'A2', 'A3', 'P9'] },
-    5: { name: 'Down Slow (Edge Hill 1) to Platform 8, over 7 reverse', dir: 'down', pts: { 7: 'R' }, tcs: ['A1', 'A2', 'B3', 'P8'] },
-    3: { name: 'Down Slow (Edge Hill 2) to Platform 5', dir: 'down', pts: { 11: 'N' }, tcs: ['C1', 'C2', 'C3', 'P5'] },
-    6: { name: 'Down Slow (Edge Hill 2) to Platform 4, over 14 reverse', dir: 'down', pts: { 14: 'R' }, tcs: ['C1', 'C2', 'D3', 'P4'] },
-    55: { name: 'Platform 9 to Edge Hill 1 (Up line)', dir: 'up', pts: { 8: 'N' }, tcs: ['B3', 'B2', 'B1'], exit: 'edgehill1' },
-    56: { name: 'Platform 8 to Edge Hill 1 (Up line)', dir: 'up', pts: { 8: 'N' }, tcs: ['B3', 'B2', 'B1'], exit: 'edgehill1' },
-    63: { name: 'Platform 5 to Edge Hill 2 (Up Slow)', dir: 'up', pts: { 14: 'N' }, tcs: ['D3', 'D2', 'D1'], exit: 'edgehill2' },
-    64: { name: 'Platform 4 to Edge Hill 2 (Up Slow)', dir: 'up', pts: { 14: 'N' }, tcs: ['D3', 'D2', 'D1'], exit: 'edgehill2' }
+    1: { name: 'Down Fast (from Edge Hill) to Platform 9', dir: 'down', pts: { 7: 'N' }, tcs: ['A1', 'A2', 'A3', 'P9'] },
+    5: { name: 'Down Fast (from Edge Hill) to Platform 8, over 7 reverse', dir: 'down', pts: { 7: 'R' }, tcs: ['A1', 'A2', 'B3', 'P8'] },
+    3: { name: 'Down Slow (from Edge Hill) to Platform 5', dir: 'down', pts: { 11: 'N' }, tcs: ['C1', 'C2', 'C3', 'P5'] },
+    6: { name: 'Down Slow (from Edge Hill) to Platform 4, over 14 reverse', dir: 'down', pts: { 14: 'R' }, tcs: ['C1', 'C2', 'D3', 'P4'] },
+    55: { name: 'Platform 9 to Edge Hill Fast (Up Fast)', dir: 'up', pts: { 8: 'N' }, tcs: ['B3', 'B2', 'B1'], exit: 'edgefast' },
+    56: { name: 'Platform 8 to Edge Hill Fast (Up Fast)', dir: 'up', pts: { 8: 'N' }, tcs: ['B3', 'B2', 'B1'], exit: 'edgefast' },
+    63: { name: 'Platform 5 to Edge Hill Slow (Up Slow)', dir: 'up', pts: { 14: 'N' }, tcs: ['D3', 'D2', 'D1'], exit: 'edgeslow' },
+    64: { name: 'Platform 4 to Edge Hill Slow (Up Slow)', dir: 'up', pts: { 14: 'N' }, tcs: ['D3', 'D2', 'D1'], exit: 'edgeslow' }
   };
   const SPARE = [];
   const JOURNEYS = {
-    A: { from: 'edgehill1', approach: 'A1', legs: [1, { dwell: 45 }, 55], label: 'Platform 9, returns on the Edge Hill 1 Up line' },
-    B: { from: 'edgehill1', approach: 'A1', legs: [5, { dwell: 45 }, 56], label: 'Platform 8, returns on the Edge Hill 1 Up line' },
-    C: { from: 'edgehill2', approach: 'C1', legs: [3, { dwell: 45 }, 63], label: 'Platform 5, returns on the Edge Hill 2 Up Slow' },
-    D: { from: 'edgehill2', approach: 'C1', legs: [6, { dwell: 45 }, 64], label: 'Platform 4, returns on the Edge Hill 2 Up Slow' }
+    A: { from: 'edgefast', approach: 'A1', legs: [1, { dwell: 45 }, 55], label: 'Platform 9, returns on the Edge Hill Up Fast' },
+    B: { from: 'edgefast', approach: 'A1', legs: [5, { dwell: 45 }, 56], label: 'Platform 8, returns on the Edge Hill Up Fast' },
+    C: { from: 'edgeslow', approach: 'C1', legs: [3, { dwell: 45 }, 63], label: 'Platform 5, returns on the Edge Hill Up Slow' },
+    D: { from: 'edgeslow', approach: 'C1', legs: [6, { dwell: 45 }, 64], label: 'Platform 4, returns on the Edge Hill Up Slow' }
   };
-  const NEIGHBOURS = { edgehill1: 'Edge Hill 1', edgehill2: 'Edge Hill 2' };
+  const NEIGHBOURS = { edgefast: 'Edge Hill Fast', edgeslow: 'Edge Hill Slow' };
   const CLASSES = {
     express: { name: 'Express passenger', code: '4' },
     ordinary: { name: 'Ordinary passenger', code: '3-1' },
@@ -46,8 +47,8 @@
     '6': 'Obstruction danger', '7': 'Stop and examine train', '5-5': 'Train divided', '16': 'Testing block instruments and bell'
   };
   Object.keys(CLASSES).forEach((k) => { CODES[CLASSES[k].code] = 'Is line clear for ' + CLASSES[k].name + '?'; });
-  const BELLS = { edgehill1: { f: 880, style: 'gong' }, edgehill2: { f: 1175, style: 'ding' } };
-  const KEYS = { edgehill1: 'E', edgehill2: 'W' };
+  const BELLS = { edgefast: { f: 880, style: 'gong' }, edgeslow: { f: 1175, style: 'ding' } };
+  const KEYS = { edgefast: 'F', edgeslow: 'S' };
   const FPL = []; // Westinghouse power frame: points are power-worked, no facing point locks
 
   KX.registerSignalBox({
