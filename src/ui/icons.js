@@ -68,6 +68,10 @@
       '<path d="M6 24h14a4 4 0 0 0 0-8H12a4 4 0 0 1 0-8h14" fill="none" stroke="#2f6f3a" stroke-width="5" stroke-linecap="round"/>' +
       '<path d="M6 24h14a4 4 0 0 0 0-8H12a4 4 0 0 1 0-8h14" fill="none" stroke="' + INK + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1 7"/>',
 
+    piano:
+      '<rect x="3" y="7" width="26" height="18" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M10 7v18M16 7v18M22 7v18" stroke="' + INK + '" stroke-width="2"/>' +
+      '<rect x="8" y="7" width="4" height="10" fill="' + INK + '"/><rect x="14" y="7" width="4" height="10" fill="' + INK + '"/><rect x="20" y="7" width="4" height="10" fill="' + INK + '"/>',
     clock:
       '<circle cx="16" cy="16" r="12" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<path d="M16 8v8l5 3" fill="none" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>',

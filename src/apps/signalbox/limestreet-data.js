@@ -48,7 +48,7 @@
   Object.keys(CLASSES).forEach((k) => { CODES[CLASSES[k].code] = 'Is line clear for ' + CLASSES[k].name + '?'; });
   const BELLS = { edgehill1: { f: 880, style: 'gong' }, edgehill2: { f: 1175, style: 'ding' } };
   const KEYS = { edgehill1: 'E', edgehill2: 'W' };
-  const FPL = [7, 8, 11, 14];
+  const FPL = []; // Westinghouse power frame: points are power-worked, no facing point locks
 
   KX.registerSignalBox({
     id: 'signalbox-limestreet', title: 'Lime Street Signal Box', image: 'assets/limestreet.png', order: 32,

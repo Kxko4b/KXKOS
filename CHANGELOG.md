@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased: Piano
+- New Piano app: three-octave keyboard (mouse, touch, computer keys), four sounds, sustain, volume, record and play back.
+- Lime Street has no FPL (Westinghouse power frame).
+
 ## Unreleased: Lime Street signal box (draft)
 - Second signal box on the shared engine; engine now takes bell keys, title and image from the data file.
 
