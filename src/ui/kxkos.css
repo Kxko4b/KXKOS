@@ -1512,3 +1512,23 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-cal-day.kx-has::after { content: ''; position: absolute; right: 4px; top: 4px; width: 7px; height: 7px; background: #c0392b; border-radius: 50%; }
 .kx-cal-sel { font-weight: bold; }
 .kx-cal-note { flex: 1; resize: none; width: 100%; box-sizing: border-box; }
+
+/* Photo wallpapers (your own photos). Paths are relative to this CSS file. */
+#kx-desktop[data-wallpaper="canal-houses"],
+.kx-wp-inner[data-wallpaper="canal-houses"] { background: #0b1230 url("../../assets/wallpaper/canal-houses.jpg") center 60% / cover no-repeat; }
+#kx-desktop[data-wallpaper="peak-dusk"],
+.kx-wp-inner[data-wallpaper="peak-dusk"] { background: #0b1230 url("../../assets/wallpaper/peak-dusk.jpg") center 55% / cover no-repeat; }
+#kx-desktop[data-wallpaper="canal-evening"],
+.kx-wp-inner[data-wallpaper="canal-evening"] { background: #0b1230 url("../../assets/wallpaper/canal-evening.jpg") center 60% / cover no-repeat; }
+#kx-desktop[data-wallpaper="valley-lights"],
+.kx-wp-inner[data-wallpaper="valley-lights"] { background: #0b1230 url("../../assets/wallpaper/valley-lights.jpg") center 45% / cover no-repeat; }
+#kx-desktop[data-wallpaper="harbour-dusk"],
+.kx-wp-inner[data-wallpaper="harbour-dusk"] { background: #0b1230 url("../../assets/wallpaper/harbour-dusk.jpg") center 55% / cover no-repeat; }
+
+/* Nicer wallpaper picker */
+.kx-wp-grid { gap: 12px; }
+.kx-wp-thumb { width: 128px; height: 80px; box-shadow: 3px 3px 0 var(--kx-ink); transition: transform .12s; }
+.kx-wp-inner { transform: scale(0.1); }
+.kx-wp-choice:hover .kx-wp-thumb { transform: translateY(-2px); }
+.kx-wp-choice.selected .kx-wp-thumb { outline: 3px solid var(--kx-accent, #3b8fe0); outline-offset: 2px; }
+.kx-wp-choice { font-size: 12px; }

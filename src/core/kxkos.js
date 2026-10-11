@@ -130,6 +130,11 @@
     { id: 'sunset', name: 'Sunset' },
     { id: 'mint', name: 'Mint' },
     { id: 'grid', name: 'Grid' },
+    { id: 'canal-houses', name: 'Canal houses' },
+    { id: 'peak-dusk', name: 'Peak at dusk' },
+    { id: 'canal-evening', name: 'Canal evening' },
+    { id: 'valley-lights', name: 'Valley lights' },
+    { id: 'harbour-dusk', name: 'Harbour dusk' },
   ];
 
   const DEFAULTS = { wallpaper: 'bliss', accent: '#3b8fe0', clock24: true };

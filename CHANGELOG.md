@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased: Photo wallpapers
+- Five photo wallpapers (Canal houses, Peak at dusk, Canal evening, Valley lights, Harbour dusk) selectable in Settings; the default stays as it was.
+- Settings: larger wallpaper previews with a highlight on the selected one.
+
 ## Unreleased: Calendar
 - New Calendar app: month view, a note per day (saved in the browser).
 
