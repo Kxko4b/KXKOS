@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased: Minesweeper levels, UI polish
-- Minesweeper: level selector (Leicht 9x9, Mittel 16x16, Schwer 30x16), stopwatch and saved best times per level.
+- Minesweeper: level selector (Easy 9x9, Medium 16x16, Hard 30x16), stopwatch and saved best times per level.
 - Removed the generated gradient wallpapers (Dusk, Night, Teal, Sunset, Mint, Grid); only Bliss and the photo wallpapers remain.
 - UI polish: thin themed scrollbars, titlebar gradient on the focused window, button hover lift, consistent inputs and focus rings.
 

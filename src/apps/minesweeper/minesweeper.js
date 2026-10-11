@@ -1,6 +1,6 @@
 /*
  * Minesweeper: three levels, stopwatch and best times.
- * Left click reveals, right click (or the "Flagge" toggle, for touch screens) places a flag.
+ * Left click reveals, right click (or the "Flag" toggle, for touch screens) places a flag.
  * The first click is never a mine. The stopwatch starts on the first click.
  */
 (function () {
@@ -10,9 +10,9 @@
   const { el } = KX;
 
   const LEVELS = {
-    easy: { name: 'Leicht', cols: 9, rows: 9, mines: 10, cell: 32 },
-    medium: { name: 'Mittel', cols: 16, rows: 16, mines: 40, cell: 28 },
-    hard: { name: 'Schwer', cols: 30, rows: 16, mines: 99, cell: 26 },
+    easy: { name: 'Easy', cols: 9, rows: 9, mines: 10, cell: 32 },
+    medium: { name: 'Medium', cols: 16, rows: 16, mines: 40, cell: 28 },
+    hard: { name: 'Hard', cols: 30, rows: 16, mines: 99, cell: 26 },
   };
   const BEST_KEY = 'kxkos.minesweeper.best';
   const loadBest = () => { try { return JSON.parse(localStorage.getItem(BEST_KEY)) || {}; } catch (e) { return {}; } };
@@ -44,14 +44,14 @@
       let best = loadBest();
 
       const counter = el('div', { class: 'kx-ms-lcd' });
-      const stopwatch = el('div', { class: 'kx-ms-lcd', title: 'Zeit in Sekunden', text: '000' });
-      const face = el('button', { class: 'kx-btn kx-ms-face', type: 'button', 'aria-label': 'Neues Spiel', title: 'Neues Spiel', text: '🙂' });
-      const levelSelect = el('select', { class: 'kx-ms-level', 'aria-label': 'Schwierigkeit' },
-        ...Object.keys(LEVELS).map((k) => el('option', { value: k, text: LEVELS[k].name + ' (' + LEVELS[k].cols + '×' + LEVELS[k].rows + ', ' + LEVELS[k].mines + ' Minen)' })));
-      const flagButton = el('button', { class: 'kx-btn', type: 'button', text: '🚩 Flagge', 'aria-pressed': 'false', title: 'Flaggenmodus (für Touch-Geräte)' });
+      const stopwatch = el('div', { class: 'kx-ms-lcd', title: 'Time in seconds', text: '000' });
+      const face = el('button', { class: 'kx-btn kx-ms-face', type: 'button', 'aria-label': 'New game', title: 'New game', text: '🙂' });
+      const levelSelect = el('select', { class: 'kx-ms-level', 'aria-label': 'Difficulty' },
+        ...Object.keys(LEVELS).map((k) => el('option', { value: k, text: LEVELS[k].name + ' (' + LEVELS[k].cols + '×' + LEVELS[k].rows + ', ' + LEVELS[k].mines + ' mines)' })));
+      const flagButton = el('button', { class: 'kx-btn', type: 'button', text: '🚩 Flag', 'aria-pressed': 'false', title: 'Flag mode (for touch screens)' });
       const bestLabel = el('div', { class: 'kx-ms-best' });
       const status = el('div', { class: 'kx-ms-status', 'aria-live': 'polite' });
-      const board = el('div', { class: 'kx-ms-board', role: 'grid', 'aria-label': 'Spielfeld' });
+      const board = el('div', { class: 'kx-ms-board', role: 'grid', 'aria-label': 'Board' });
 
       const index = (r, c) => r * cols + c;
 
@@ -87,7 +87,7 @@
 
       function updateHeader() {
         counter.textContent = String(Math.max(-99, flagsLeft)).padStart(3, '0');
-        bestLabel.textContent = best[level] ? 'Bestzeit: ' + best[level] + ' s' : 'Noch keine Bestzeit';
+        bestLabel.textContent = best[level] ? 'Best time: ' + best[level] + ' s' : 'No best time yet';
       }
 
       function tick() {
@@ -118,7 +118,7 @@
         const secs = Math.floor((Date.now() - t0) / 1000);
         stopwatch.textContent = clock(secs);
         face.textContent = won ? '😎' : '😵';
-        status.textContent = won ? 'Gewonnen in ' + secs + ' s!' : 'Verloren!';
+        status.textContent = won ? 'You won in ' + secs + ' s!' : 'Game over!';
         cells.forEach((cell) => {
           if (cell.mine && (!won || !cell.flagged)) {
             if (won) cell.flagged = true;
@@ -131,7 +131,7 @@
           if (!best[level] || secs < best[level]) {
             best[level] = secs;
             saveBest(best);
-            status.textContent += ' Neue Bestzeit!';
+            status.textContent += ' New best time!';
           }
           updateHeader();
         }
@@ -190,7 +190,7 @@
         revealedCount = 0;
         face.textContent = '🙂';
         stopwatch.textContent = '000';
-        status.textContent = 'Spiel läuft';
+        status.textContent = 'Playing';
         board.textContent = '';
         board.style.gridTemplateColumns = 'repeat(' + cols + ', ' + L.cell + 'px)';
         board.style.gridAutoRows = L.cell + 'px';
