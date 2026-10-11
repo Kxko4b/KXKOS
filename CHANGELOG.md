@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: Minesweeper levels, UI polish
+- Minesweeper: level selector (Leicht 9x9, Mittel 16x16, Schwer 30x16), stopwatch and saved best times per level.
+- Removed the generated gradient wallpapers (Dusk, Night, Teal, Sunset, Mint, Grid); only Bliss and the photo wallpapers remain.
+- UI polish: thin themed scrollbars, titlebar gradient on the focused window, button hover lift, consistent inputs and focus rings.
+
 ## Unreleased: Photo wallpapers
 - Five photo wallpapers (Canal houses, Peak at dusk, Canal evening, Valley lights, Harbour dusk) selectable in Settings; the default stays as it was.
 - Settings: larger wallpaper previews with a highlight on the selected one.

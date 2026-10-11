@@ -124,12 +124,6 @@
 
   KX.wallpapers = [
     { id: 'bliss', name: 'Bliss' },
-    { id: 'dusk', name: 'Dusk' },
-    { id: 'night', name: 'Night' },
-    { id: 'teal', name: 'Teal' },
-    { id: 'sunset', name: 'Sunset' },
-    { id: 'mint', name: 'Mint' },
-    { id: 'grid', name: 'Grid' },
     { id: 'canal-houses', name: 'Canal houses' },
     { id: 'peak-dusk', name: 'Peak at dusk' },
     { id: 'canal-evening', name: 'Canal evening' },

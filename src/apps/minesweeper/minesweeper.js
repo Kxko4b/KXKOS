@@ -1,7 +1,7 @@
 /*
- * Minesweeper: classic 9x9 board with 10 mines.
+ * Minesweeper: three levels, stopwatch and best times.
  * Left click reveals, right click (or the "Flagge" toggle, for touch screens) places a flag.
- * The first click is never a mine.
+ * The first click is never a mine. The stopwatch starts on the first click.
  */
 (function () {
   'use strict';
@@ -9,35 +9,51 @@
   const KX = window.KXKOS;
   const { el } = KX;
 
-  const SIZE = 9;
-  const MINES = 10;
+  const LEVELS = {
+    easy: { name: 'Leicht', cols: 9, rows: 9, mines: 10, cell: 32 },
+    medium: { name: 'Mittel', cols: 16, rows: 16, mines: 40, cell: 28 },
+    hard: { name: 'Schwer', cols: 30, rows: 16, mines: 99, cell: 26 },
+  };
+  const BEST_KEY = 'kxkos.minesweeper.best';
+  const loadBest = () => { try { return JSON.parse(localStorage.getItem(BEST_KEY)) || {}; } catch (e) { return {}; } };
+  const saveBest = (o) => { try { localStorage.setItem(BEST_KEY, JSON.stringify(o)); } catch (e) { /* ignore */ } };
+  const clock = (s) => String(Math.min(999, s)).padStart(3, '0');
 
   KX.registerApp({
     id: 'minesweeper',
     title: 'Minesweeper',
     icon: 'mine',
     width: 350,
-    height: 470,
+    height: 520,
     minWidth: 330,
     minHeight: 440,
     desktop: true,
     order: 60,
 
     launch(win) {
+      let level = 'easy';
+      let cols = 9, rows = 9, mines = 10;
       let cells = [];
       let started = false; // mines are placed on the first click
       let over = false;
-      let flagsLeft = MINES;
+      let flagsLeft = mines;
       let revealedCount = 0;
       let flagMode = false;
+      let t0 = 0;
+      let timer = 0;
+      let best = loadBest();
 
-      const counter = el('div', { class: 'kx-ms-counter' });
+      const counter = el('div', { class: 'kx-ms-lcd' });
+      const stopwatch = el('div', { class: 'kx-ms-lcd', title: 'Zeit in Sekunden', text: '000' });
       const face = el('button', { class: 'kx-btn kx-ms-face', type: 'button', 'aria-label': 'Neues Spiel', title: 'Neues Spiel', text: '🙂' });
+      const levelSelect = el('select', { class: 'kx-ms-level', 'aria-label': 'Schwierigkeit' },
+        ...Object.keys(LEVELS).map((k) => el('option', { value: k, text: LEVELS[k].name + ' (' + LEVELS[k].cols + '×' + LEVELS[k].rows + ', ' + LEVELS[k].mines + ' Minen)' })));
       const flagButton = el('button', { class: 'kx-btn', type: 'button', text: '🚩 Flagge', 'aria-pressed': 'false', title: 'Flaggenmodus (für Touch-Geräte)' });
+      const bestLabel = el('div', { class: 'kx-ms-best' });
       const status = el('div', { class: 'kx-ms-status', 'aria-live': 'polite' });
       const board = el('div', { class: 'kx-ms-board', role: 'grid', 'aria-label': 'Spielfeld' });
 
-      const index = (r, c) => r * SIZE + c;
+      const index = (r, c) => r * cols + c;
 
       function neighbors(r, c) {
         const out = [];
@@ -45,7 +61,7 @@
           for (let dc = -1; dc <= 1; dc++) {
             const nr = r + dr;
             const nc = c + dc;
-            if ((dr || dc) && nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) out.push(cells[index(nr, nc)]);
+            if ((dr || dc) && nr >= 0 && nr < rows && nc >= 0 && nc < cols) out.push(cells[index(nr, nc)]);
           }
         }
         return out;
@@ -70,14 +86,21 @@
       }
 
       function updateHeader() {
-        counter.textContent = 'Minen: ' + flagsLeft;
+        counter.textContent = String(Math.max(-99, flagsLeft)).padStart(3, '0');
+        bestLabel.textContent = best[level] ? 'Bestzeit: ' + best[level] + ' s' : 'Noch keine Bestzeit';
       }
+
+      function tick() {
+        if (!win.body.isConnected) { clearInterval(timer); return; }
+        stopwatch.textContent = clock(Math.floor((Date.now() - t0) / 1000));
+      }
+      function stopClock() { clearInterval(timer); timer = 0; }
 
       function placeMines(safe) {
         // Keep the first click and its neighbours clear so the first move always opens something.
         const blocked = new Set([safe, ...neighbors(safe.row, safe.col)]);
         const candidates = cells.filter((cell) => !blocked.has(cell));
-        for (let i = 0; i < MINES; i++) {
+        for (let i = 0; i < mines; i++) {
           const pick = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
           pick.mine = true;
         }
@@ -85,12 +108,17 @@
           cell.count = neighbors(cell.row, cell.col).filter((n) => n.mine).length;
         });
         started = true;
+        t0 = Date.now();
+        timer = setInterval(tick, 250);
       }
 
       function endGame(won) {
         over = true;
+        stopClock();
+        const secs = Math.floor((Date.now() - t0) / 1000);
+        stopwatch.textContent = clock(secs);
         face.textContent = won ? '😎' : '😵';
-        status.textContent = won ? 'Gewonnen!' : 'Verloren!';
+        status.textContent = won ? 'Gewonnen in ' + secs + ' s!' : 'Verloren!';
         cells.forEach((cell) => {
           if (cell.mine && (!won || !cell.flagged)) {
             if (won) cell.flagged = true;
@@ -100,6 +128,11 @@
         });
         if (won) {
           flagsLeft = 0;
+          if (!best[level] || secs < best[level]) {
+            best[level] = secs;
+            saveBest(best);
+            status.textContent += ' Neue Bestzeit!';
+          }
           updateHeader();
         }
       }
@@ -123,7 +156,7 @@
           render(current);
           if (current.count === 0) neighbors(current.row, current.col).forEach((n) => stack.push(n));
         }
-        if (revealedCount === SIZE * SIZE - MINES) endGame(true);
+        if (revealedCount === cols * rows - mines) endGame(true);
       }
 
       function toggleFlag(cell) {
@@ -135,18 +168,35 @@
         updateHeader();
       }
 
+      function fitWindow() {
+        // Make the window big enough for the board (only grows it, never shrinks what the user chose).
+        const L = LEVELS[level];
+        const w = L.cols * (L.cell + 2) + 70;
+        const h = L.rows * (L.cell + 2) + 230;
+        if (!win.el.classList.contains('maximized')) {
+          win.el.style.width = Math.max(win.el.offsetWidth, w) + 'px';
+          win.el.style.height = Math.max(win.el.offsetHeight, h) + 'px';
+        }
+      }
+
       function newGame() {
+        const L = LEVELS[level];
+        cols = L.cols; rows = L.rows; mines = L.mines;
+        stopClock();
         cells = [];
         started = false;
         over = false;
-        flagsLeft = MINES;
+        flagsLeft = mines;
         revealedCount = 0;
         face.textContent = '🙂';
+        stopwatch.textContent = '000';
         status.textContent = 'Spiel läuft';
         board.textContent = '';
+        board.style.gridTemplateColumns = 'repeat(' + cols + ', ' + L.cell + 'px)';
+        board.style.gridAutoRows = L.cell + 'px';
 
-        for (let r = 0; r < SIZE; r++) {
-          for (let c = 0; c < SIZE; c++) {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
             const cell = { row: r, col: c, mine: false, revealed: false, flagged: false, count: 0, element: null };
             cell.element = el('div', { class: 'kx-ms-cell', role: 'gridcell' });
             cell.element.addEventListener('click', () => (flagMode ? toggleFlag(cell) : reveal(cell)));
@@ -162,14 +212,20 @@
       }
 
       face.addEventListener('click', newGame);
+      levelSelect.addEventListener('change', () => { level = levelSelect.value; newGame(); fitWindow(); levelSelect.blur(); });
       flagButton.addEventListener('click', () => {
         flagMode = !flagMode;
         flagButton.classList.toggle('primary', flagMode);
         flagButton.setAttribute('aria-pressed', String(flagMode));
       });
+      win.onClose = () => stopClock();
 
       win.body.appendChild(
-        el('div', { class: 'kx-ms' }, el('div', { class: 'kx-ms-header' }, counter, face, flagButton), board, status)
+        el('div', { class: 'kx-ms' },
+          el('div', { class: 'kx-ms-header' }, counter, face, stopwatch),
+          el('div', { class: 'kx-ms-toolbar' }, levelSelect, flagButton),
+          el('div', { class: 'kx-ms-boardwrap' }, board),
+          bestLabel, status)
       );
       newGame();
     },
