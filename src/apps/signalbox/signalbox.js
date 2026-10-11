@@ -9,6 +9,8 @@
 
   function conflict(a, b) {
     if (a.dir !== b.dir && a.tcs.some((t) => b.tcs.includes(t))) return true;
+    // converging routes: same direction, different starting track circuit, but they share track beyond it
+    if (a.dir === b.dir && a.tcs[0] !== b.tcs[0] && a.tcs.some((t) => b.tcs.includes(t))) return true;
     for (const p of Object.keys(a.pts)) {
       if (!(p in b.pts)) continue;
       if (a.pts[p] !== b.pts[p]) return true;

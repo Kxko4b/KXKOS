@@ -29,7 +29,11 @@ The locking table is a DRAFT worked out from the picture. Signals without a rout
 
 ## Lime Street (draft)
 
-`src/apps/signalbox/limestreet-data.js` registers a second box on the same engine. Edge Hill is two double-track pairs, so there are two neighbours, **Edge Hill Fast** (bell key F, Down Fast signal 1, Up Fast exit 47) and **Edge Hill Slow** (key S, Down Slow signal 3, Up Slow exit 69), each with its own bell sound and its own pair of block instruments. Trains arrive on the Down lines and leave on the Up lines. This is a simplified DRAFT: platforms 9, 8, 5 and 4, points 7, 8, 11 and 14. Positions are estimates and the interlocking does not yet follow the full diagram. Correct it by editing the data file.
+`src/apps/signalbox/limestreet-data.js` registers a second box on the same engine. Edge Hill has four tracks and two block sections: **Edge Hill Fast** (bell key F) and **Edge Hill Slow** (key S), each with its own bell sound and its own pair of block instruments. In each pair the upper track runs to Lime Street and the lower one back to Edge Hill. No FPL (Westinghouse).
+
+Every train can use every platform 1 to 9. The layout is generated from one pattern: Down Fast enters the platform ladder at the platform 9 end, Down Slow at the platform 1 end, and each platform has its own points (51 to 59). Route levers are working numbers, not the real diagram numbers: 11-19 Down Fast to platform p, 21-29 platform p to Up Fast, 31-39 Down Slow to platform p, 41-49 platform p to Up Slow. Positions are estimates. Rename or reposition anything in the data file.
+
+Routes that run in the same direction but start on different tracks and share track (converging routes) now lock each other out.
 
 ## Bell procedure for messages from the adjacent box
 2 (train entering section) and 2-1 (train out of section) now start with the neighbour ringing 1 (call attention). Answer 1 and it rings the message. Repeat the message to acknowledge it; the neighbour does not ring it again. If you do not answer, it calls attention up to three more times and then sends the message anyway.
