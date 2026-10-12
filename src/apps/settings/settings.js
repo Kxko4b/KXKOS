@@ -66,6 +66,34 @@
       const clockInput = el('input', { type: 'checkbox', checked: KX.settings.get('clock24') });
       clockInput.addEventListener('change', () => KX.settings.set('clock24', clockInput.checked));
 
+      /* ----- sound ----- */
+
+      const soundInput = el('input', { type: 'checkbox', checked: KX.settings.get('soundEnabled') });
+      soundInput.addEventListener('change', () => KX.settings.set('soundEnabled', soundInput.checked));
+
+      /* ----- motion ----- */
+
+      const motionInput = el('input', { type: 'checkbox', checked: KX.settings.get('reduceMotion') });
+      motionInput.addEventListener('change', () => KX.settings.set('reduceMotion', motionInput.checked));
+
+      /* ----- desktop icons ----- */
+
+      const iconSizeSel = el(
+        'select',
+        { class: 'kx-set-select', onchange: () => KX.settings.set('iconSize', iconSizeSel.value) },
+        ...KX.iconSizes.map((s) => el('option', { value: s, text: s[0].toUpperCase() + s.slice(1) }))
+      );
+
+      /* ----- screensaver ----- */
+
+      const saverInput = el('input', { type: 'checkbox', checked: KX.settings.get('screensaverEnabled') });
+      saverInput.addEventListener('change', () => KX.settings.set('screensaverEnabled', saverInput.checked));
+      const saverMinutes = el('input', {
+        type: 'number', min: '1', max: '30', style: 'width:3.5em',
+        value: String(KX.settings.get('screensaverMinutes')),
+      });
+      saverMinutes.addEventListener('change', () => KX.settings.set('screensaverMinutes', +saverMinutes.value));
+
       /* ----- sync UI with the settings store ----- */
 
       function sync() {
@@ -83,6 +111,12 @@
         });
         if (colorInput.value !== accent) colorInput.value = accent;
         clockInput.checked = KX.settings.get('clock24');
+        soundInput.checked = KX.settings.get('soundEnabled');
+        motionInput.checked = KX.settings.get('reduceMotion');
+        iconSizeSel.value = KX.settings.get('iconSize');
+        saverInput.checked = KX.settings.get('screensaverEnabled');
+        saverMinutes.value = String(KX.settings.get('screensaverMinutes'));
+        saverMinutes.disabled = !saverInput.checked;
       }
       const unsubscribe = KX.on('settings:changed', sync);
       win.onClose = unsubscribe;
@@ -122,6 +156,21 @@
             el('p', { class: 'kx-set-note', text: 'Used for window titles, buttons and highlights.' })
           ),
           section('Clock', el('div', { class: 'kx-set-row' }, el('label', null, clockInput, '24-hour clock'))),
+          section(
+            'Sound and motion',
+            el('div', { class: 'kx-set-row' }, el('label', null, soundInput, 'Enable sound (signal boxes, piano)')),
+            el('div', { class: 'kx-set-row' }, el('label', null, motionInput, 'Reduce motion and animations'))
+          ),
+          section(
+            'Desktop icons',
+            el('div', { class: 'kx-set-row' }, el('label', null, 'Icon size ', iconSizeSel))
+          ),
+          section(
+            'Screensaver',
+            el('div', { class: 'kx-set-row' }, el('label', null, saverInput, 'Enable screensaver when idle')),
+            el('div', { class: 'kx-set-row' }, el('label', null, 'Idle time (minutes) ', saverMinutes)),
+            el('p', { class: 'kx-set-note', text: 'A night skyline with a passing train. Any key, click or the Konami code (↑↑↓↓←→←→BA) also shows it.' })
+          ),
           section(
             'System',
             el(

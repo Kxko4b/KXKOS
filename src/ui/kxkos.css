@@ -102,6 +102,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .kx-desktop-icon:hover { background: rgba(255, 255, 255, 0.18); }
 .kx-desktop-icon.selected { background: rgba(255, 255, 255, 0.3); border: 2px dashed #fff; }
 
+#kx-desktop[data-icon-size="small"] .kx-desktop-icon { width: 68px; }
+#kx-desktop[data-icon-size="small"] .kx-desktop-icon-label { font-size: 11px; }
+#kx-desktop[data-icon-size="large"] .kx-desktop-icon { width: 112px; }
+#kx-desktop[data-icon-size="large"] .kx-desktop-icon-label { font-size: 15px; }
+
 /* --------------------------------------------------------------------- windows */
 
 .kx-window {
@@ -567,6 +572,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+html.kx-reduce-motion * { transition: none !important; animation: none !important; }
 /* -------------------------------------------------------------------
    KXEARCH + Bliss-style default wallpaper
    ------------------------------------------------------------------- */

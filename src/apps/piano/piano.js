@@ -26,8 +26,12 @@
       const held = new Set();            // notes whose key is still down while sustain is on
       let rec = null, recStart = 0, tape = [], playTimers = [];
 
+      function applyVolume() {
+        if (!master) return;
+        master.gain.value = KX.settings.get('soundEnabled') ? vol.value / 100 : 0;
+      }
       function audio() {
-        if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination); }
+        if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination); applyVolume(); }
         if (ac.state === 'suspended') ac.resume();
         return ac;
       }
@@ -105,7 +109,7 @@
 
       const soundSel = el('select', { class: 'kx-brief-input', onchange: () => { sound = soundSel.value; keysEl.focus(); } },
         ...[['piano', 'Piano'], ['organ', 'Organ'], ['bell', 'Bell'], ['square', 'Chiptune']].map(([v, t]) => el('option', { value: v, text: t })));
-      const vol = el('input', { type: 'range', min: '0', max: '100', value: '50', oninput: () => { audio(); master.gain.value = vol.value / 100; } });
+      const vol = el('input', { type: 'range', min: '0', max: '100', value: '50', oninput: () => { audio(); applyVolume(); } });
       const sus = el('button', { type: 'button', class: 'kx-btn', text: 'Sustain (Space)', onclick: () => setSustain(!sustain) });
       const octLabel = el('span', { class: 'kx-piano-status', text: 'Octave: C3 to C6' });
       const octDown = el('button', { type: 'button', class: 'kx-btn', text: 'Octave −', title: 'Arrow Down or Page Down', onclick: () => shift(-1) });
@@ -187,7 +191,8 @@
         if (heldKeys[k] !== undefined) { release(heldKeys[k]); delete heldKeys[k]; }
       }
       document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
-      win.onClose = () => { stopPlay(); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); if (ac) ac.close(); };
+      const unsubSound = KX.on('settings:changed', (change) => { if (change.key === 'soundEnabled') applyVolume(); });
+      win.onClose = () => { stopPlay(); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); if (ac) ac.close(); unsubSound(); };
     }
   });
 })();

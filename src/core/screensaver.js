@@ -1,7 +1,14 @@
 /* Screensaver: after a few idle minutes (or the Konami code) a night train crosses a lit skyline. Any input dismisses it. */
 (function () {
   'use strict';
-  const IDLE_MS = 3 * 60 * 1000;
+  const KX = window.KXKOS;
+  function idleMs() {
+    const minutes = (KX && KX.settings && KX.settings.get('screensaverMinutes')) || 3;
+    return minutes * 60 * 1000;
+  }
+  function enabled() {
+    return !KX || !KX.settings || KX.settings.get('screensaverEnabled') !== false;
+  }
   let cv = null, raf = 0, idleTimer = 0, konami = 0, startedAt = 0;
   const SEQ = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 
@@ -66,7 +73,11 @@
     raf = requestAnimationFrame(frame);
   }
   function stop() { if (!cv) return; cancelAnimationFrame(raf); cv.remove(); cv = null; }
-  function arm() { clearTimeout(idleTimer); idleTimer = setTimeout(start, IDLE_MS); }
+  function arm() {
+    clearTimeout(idleTimer);
+    if (!enabled()) return;
+    idleTimer = setTimeout(start, idleMs());
+  }
   function activity(e) {
     if (cv) { if (performance.now() - startedAt > 600) { stop(); } arm(); return; }
     if (e && e.type === 'keydown') {
@@ -77,6 +88,11 @@
   }
   ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel'].forEach((ev) => window.addEventListener(ev, activity, { passive: true }));
   arm();
+  if (KX && KX.on) {
+    KX.on('settings:changed', (change) => {
+      if (change.key === 'screensaverEnabled' || change.key === 'screensaverMinutes') arm();
+    });
+  }
   window.KXKOS = window.KXKOS || {};
   window.KXKOS.screensaver = { start, stop };
 })();

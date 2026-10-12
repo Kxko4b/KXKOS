@@ -131,7 +131,18 @@
     { id: 'harbour-dusk', name: 'Harbour dusk' },
   ];
 
-  const DEFAULTS = { wallpaper: 'bliss', accent: '#3b8fe0', clock24: true };
+  const ICON_SIZES = ['small', 'medium', 'large'];
+
+  const DEFAULTS = {
+    wallpaper: 'bliss',
+    accent: '#3b8fe0',
+    clock24: true,
+    soundEnabled: true,
+    reduceMotion: false,
+    iconSize: 'medium',
+    screensaverEnabled: true,
+    screensaverMinutes: 3,
+  };
 
   function sanitize(input) {
     const out = Object.assign({}, DEFAULTS, input && typeof input === 'object' ? input : {});
@@ -139,8 +150,24 @@
     if (typeof out.accent !== 'string' || !/^#[0-9a-f]{6}$/i.test(out.accent)) out.accent = DEFAULTS.accent;
     out.accent = out.accent.toLowerCase();
     out.clock24 = !!out.clock24;
-    return { wallpaper: out.wallpaper, accent: out.accent, clock24: out.clock24 };
+    out.soundEnabled = !!out.soundEnabled;
+    out.reduceMotion = !!out.reduceMotion;
+    if (!ICON_SIZES.includes(out.iconSize)) out.iconSize = DEFAULTS.iconSize;
+    out.screensaverEnabled = !!out.screensaverEnabled;
+    out.screensaverMinutes = KX.clamp(Math.round(Number(out.screensaverMinutes) || DEFAULTS.screensaverMinutes), 1, 30);
+    return {
+      wallpaper: out.wallpaper,
+      accent: out.accent,
+      clock24: out.clock24,
+      soundEnabled: out.soundEnabled,
+      reduceMotion: out.reduceMotion,
+      iconSize: out.iconSize,
+      screensaverEnabled: out.screensaverEnabled,
+      screensaverMinutes: out.screensaverMinutes,
+    };
   }
+
+  KX.iconSizes = ICON_SIZES;
 
   const settings = sanitize(KX.storage.get('settings', {}));
 

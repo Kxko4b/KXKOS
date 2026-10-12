@@ -23,11 +23,20 @@
     root.setProperty('--kx-accent-ink', luminance > 0.62 ? '#1b2a49' : '#ffffff');
   }
 
+  function applyReduceMotion(on) {
+    document.documentElement.classList.toggle('kx-reduce-motion', !!on);
+  }
+
+  function applyIconSize(size) {
+    document.getElementById('kx-desktop').setAttribute('data-icon-size', size);
+  }
+
   /* ------------------------------------------------------------ desktop icons */
 
   function renderIcons() {
     const container = document.getElementById('kx-icons');
     container.textContent = '';
+    const px = { small: 32, medium: 44, large: 56 }[KX.settings.get('iconSize')] || 44;
 
     KX.listApps()
       .filter((app) => app.desktop)
@@ -47,7 +56,7 @@
               if (e.key === 'Enter') KX.openApp(app.id);
             },
           },
-          el('span', { html: KX.icon(app.icon, 44) }),
+          el('span', { html: KX.icon(app.icon, px) }),
           el('span', { class: 'kx-desktop-icon-label', text: app.title })
         );
         container.appendChild(button);
@@ -144,11 +153,15 @@
     init() {
       applyWallpaper(KX.settings.get('wallpaper'));
       applyAccent(KX.settings.get('accent'));
+      applyReduceMotion(KX.settings.get('reduceMotion'));
+      applyIconSize(KX.settings.get('iconSize'));
       renderIcons();
       KX.on('apps:changed', renderIcons);
       KX.on('settings:changed', (change) => {
         if (change.key === 'wallpaper') applyWallpaper(change.value);
         if (change.key === 'accent') applyAccent(change.value);
+        if (change.key === 'reduceMotion') applyReduceMotion(change.value);
+        if (change.key === 'iconSize') { applyIconSize(change.value); renderIcons(); }
       });
 
       // Clicking the bare desktop clears the icon selection and dismisses the start menu.

@@ -52,7 +52,7 @@
         return ac;
       }
       function tone(freq, dur, gain, type, when) {
-        const a = ctx(); if (!a || muted) return;
+        const a = ctx(); if (!a || muted || !KX.settings.get('soundEnabled')) return;
         const t0 = a.currentTime + (when || 0);
         const o = a.createOscillator(), g = a.createGain();
         o.type = type || 'sine'; o.frequency.value = freq;
@@ -61,7 +61,7 @@
         o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.05);
       }
       function noise(dur, gain, when, lowpass) {
-        const a = ctx(); if (!a || muted) return;
+        const a = ctx(); if (!a || muted || !KX.settings.get('soundEnabled')) return;
         const t0 = a.currentTime + (when || 0);
         const buf = a.createBuffer(1, Math.max(1, Math.floor(a.sampleRate * dur)), a.sampleRate);
         const d = buf.getChannelData(0);

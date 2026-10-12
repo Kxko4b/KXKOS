@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: More useful settings
+- Settings: "Enable sound" toggle mutes/unmutes signal box and piano audio.
+- Settings: "Reduce motion and animations" disables window/button transitions and the signal-box route-line animation, independent of the OS-level reduced-motion preference.
+- Settings: desktop icon size (Small / Medium / Large).
+- Settings: screensaver on/off toggle and an idle-time-in-minutes field (was a fixed 3 minutes).
+- "Reset appearance" now also restores these to their defaults.
+
 ## Unreleased: Signal box route lines and restore button
 - Both signal boxes: hovering a lever previews the route it sets as a faint line on the diagram; a held signal lights its route as an animated blue line.
 - Lever tooltips show the route name.
