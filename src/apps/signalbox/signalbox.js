@@ -344,6 +344,31 @@
       /* ------------------------------------------------------------- UI */
       const diagram = el('div', { class: 'kx-sb-diagram', style: 'aspect-ratio:' + D.W + '/' + D.H });
       diagram.appendChild(el('img', { class: 'kx-sb-img', src: IMG, alt: cfg.title, draggable: 'false' }));
+      // An SVG layer draws the route a lever sets up: a live (lit) line while the lever is held,
+      // a dim preview line on hover so you can see what a lever does before pulling it.
+      const routeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      routeSvg.setAttribute('class', 'kx-sb-routes');
+      routeSvg.setAttribute('viewBox', '0 0 ' + D.W + ' ' + D.H);
+      routeSvg.setAttribute('preserveAspectRatio', 'none');
+      diagram.appendChild(routeSvg);
+      let hoverRoute = null;
+      function routePoints(sig) {
+        const r = routeOf(sig); if (!r) return null;
+        const pts = r.tcs.map((t) => D.TCS[t]).filter(Boolean);
+        return pts.length > 1 ? pts : null;
+      }
+      function drawRoutes() {
+        routeSvg.textContent = '';
+        Object.keys(D.ROUTES).forEach((s) => {
+          if (!lever[s] && +s !== hoverRoute) return;
+          const pts = routePoints(s); if (!pts) return;
+          const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', d);
+          path.setAttribute('class', 'kx-sb-routeline' + (lever[s] ? ' kx-sb-routeline-live' : ' kx-sb-routeline-preview'));
+          routeSvg.appendChild(path);
+        });
+      }
       const sigEls = {}, ptEls = {}, tcEls = {};
       Object.keys(D.TCS).forEach((k) => {
         const [x, y] = D.TCS[k];
@@ -352,12 +377,18 @@
       });
       Object.keys(D.POINTS).forEach((k) => {
         const [x, y] = D.POINTS[k];
-        const e = el('div', { class: 'kx-sb-pt', title: 'Points ' + k, style: 'left:' + pct(x, D.W) + ';top:' + pct(y, D.H) });
+        const e = el('div', {
+          class: 'kx-sb-pt', title: 'Points ' + k, style: 'left:' + pct(x, D.W) + ';top:' + pct(y, D.H), onclick: () => pull(+k),
+          onmouseenter: () => { hoverRoute = +k; drawRoutes(); }, onmouseleave: () => { hoverRoute = null; drawRoutes(); }
+        });
         ptEls[k] = e; diagram.appendChild(e);
       });
       Object.keys(D.SIGNALS).forEach((k) => {
         const [x, y] = D.SIGNALS[k];
-        const e = el('div', { class: 'kx-sb-sig', title: 'Signal ' + k, style: 'left:' + pct(x, D.W) + ';top:' + pct(y, D.H), onclick: () => pull(+k) });
+        const e = el('div', {
+          class: 'kx-sb-sig', title: 'Signal ' + k, style: 'left:' + pct(x, D.W) + ';top:' + pct(y, D.H), onclick: () => pull(+k),
+          onmouseenter: () => { hoverRoute = +k; drawRoutes(); }, onmouseleave: () => { hoverRoute = null; drawRoutes(); }
+        });
         sigEls[k] = e; diagram.appendChild(e);
       });
 
@@ -370,8 +401,15 @@
       const fplBtn = {};
       ids.forEach((id) => {
         const kind = id in D.SIGNALS ? 'sig' : id in D.POINTS ? 'pt' : 'spare';
-        const bt = el('button', { type: 'button', class: 'kx-sb-lever kx-sb-l' + kind, text: String(id), title: (kind === 'sig' ? 'Signal ' : kind === 'pt' ? 'Points ' : 'Spare lever ') + id });
-        if (kind !== 'spare') bt.addEventListener('click', () => pull(id)); else bt.disabled = true;
+        const route = kind === 'sig' ? routeOf(id) : null;
+        const title = kind === 'sig' ? 'Signal ' + id + (route ? ' — ' + route.name : ' (no route defined yet)')
+          : kind === 'pt' ? 'Points ' + id : 'Spare lever ' + id;
+        const bt = el('button', { type: 'button', class: 'kx-sb-lever kx-sb-l' + kind, text: String(id), title });
+        if (kind !== 'spare') {
+          bt.addEventListener('click', () => pull(id));
+          bt.addEventListener('mouseenter', () => { hoverRoute = id; drawRoutes(); });
+          bt.addEventListener('mouseleave', () => { hoverRoute = null; drawRoutes(); });
+        } else bt.disabled = true;
         levBtn[id] = bt;
         const cell = el('div', { class: 'kx-sb-cell' }, bt);
         if (kind === 'pt' && (D.FPL || []).includes(id)) {
@@ -409,6 +447,17 @@
       const trainList = el('div', { class: 'kx-sb-trains' });
       const mute = el('button', { type: 'button', class: 'kx-btn', text: 'Sound on', onclick: () => { muted = !muted; mute.textContent = muted ? 'Sound off' : 'Sound on'; } });
       const codesBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Codes', onclick: showCodes });
+      const keyBtn = el('button', { type: 'button', class: 'kx-btn', text: 'Key', onclick: showKey });
+      function showKey() {
+        KX.ui.alert({
+          title: 'Diagram key',
+          message: 'Signals: red = at danger, amber = route set (not yet clear, or a train has passed and the lever needs restoring), green = clear.\n\n'
+            + 'Points: dark = normal, yellow = reverse. A blue ring means the FPL is applied.\n\n'
+            + 'Track circuits: a blue ring means a route is set over it; red with a glow means a train is on it.\n\n'
+            + 'Hover a lever (on the diagram or in the frame) to preview the route it sets, as a faint line. Pull it and the line lights up blue for as long as the route is held.\n\n'
+            + 'Click a signal or points marker on the diagram to pull its lever, the same as the lever frame below. "Restore signals" puts back to danger any signal a train has already passed.'
+        });
+      }
       function showCodes() {
         const rows = Object.keys(D.CODES).map((c) => c + '  ' + D.CODES[c]).join('\n');
         KX.ui.alert({ title: 'Bell codes', message: rows });
@@ -422,7 +471,12 @@
           levBtn[k].classList.toggle('kx-sb-pulled', !!lever[k]);
         });
         Object.keys(ptEls).forEach((k) => { ptEls[k].classList.toggle('kx-sb-rev', !!lever[k]); levBtn[k].classList.toggle('kx-sb-pulled', !!lever[k]); });
-        Object.keys(tcEls).forEach((k) => tcEls[k].classList.toggle('kx-sb-occ', !!occ[k]));
+        const routeTcs = new Set();
+        Object.keys(D.ROUTES).forEach((s) => { if (lever[s]) D.ROUTES[s].tcs.forEach((t) => routeTcs.add(t)); });
+        Object.keys(tcEls).forEach((k) => {
+          tcEls[k].classList.toggle('kx-sb-occ', !!occ[k]);
+          tcEls[k].classList.toggle('kx-sb-route', routeTcs.has(k) && !occ[k]);
+        });
         Object.keys(fplBtn).forEach((k) => { fplBtn[k].classList.toggle('kx-sb-on', !!fpl[k]); });
         Object.keys(ptEls).forEach((k) => ptEls[k].classList.toggle('kx-sb-fpl-on', !!fpl[k]));
         Object.keys(block).forEach((nb) => {
@@ -444,9 +498,22 @@
           const what = t.state === 'moving' ? 'moving' : t.state === 'dwell' ? 'standing in the platform' : typeof leg === 'number' ? 'waiting at signal ' + leg : '';
           trainList.appendChild(el('div', { class: 'kx-sb-trainrow', text: '#' + t.id + ' ' + D.CLASSES[t.cls].name + ' (' + D.CLASSES[t.cls].code + ') · ' + jd.label + ' · ' + what }));
         });
+        const toRestore = Object.keys(D.SIGNALS).filter((k) => lever[k] && !cleared[k]);
+        restoreBtn.disabled = !toRestore.length;
+        restoreBtn.title = toRestore.length ? 'Puts signals ' + toRestore.join(', ') + ' back to danger.' : 'No signals need restoring.';
+        drawRoutes();
       }
 
-      const top = el('div', { class: 'kx-embed-bar' }, el('strong', { text: cfg.title.replace(' Signal Box', '') }), el('span', { class: 'kx-embed-spacer' }), codesBtn, mute);
+      const restoreBtn = el('button', {
+        type: 'button', class: 'kx-btn', text: 'Restore signals', title: 'No signals need restoring.',
+        onclick: () => {
+          const ids = Object.keys(D.SIGNALS).filter((k) => lever[k] && !cleared[k]);
+          if (!ids.length) return;
+          ids.forEach((k) => { lever[k] = 0; });
+          sLever(); log('Restored to danger: signal' + (ids.length > 1 ? 's' : '') + ' ' + ids.join(', ') + '.', 'info'); render();
+        }
+      });
+      const top = el('div', { class: 'kx-embed-bar' }, el('strong', { text: cfg.title.replace(' Signal Box', '') }), el('span', { class: 'kx-embed-spacer' }), restoreBtn, keyBtn, codesBtn, mute);
       const lower = el('div', { class: 'kx-sb-lower' },
         el('div', { class: 'kx-sb-col' }, blockPanel, trainList),
         el('div', { class: 'kx-sb-col' }, logBox));

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: Signal box route lines and restore button
+- Both signal boxes: hovering a lever previews the route it sets as a faint line on the diagram; a held signal lights its route as an animated blue line.
+- Lever tooltips show the route name.
+- New "Restore signals" button puts back to danger any signal a train has already passed.
+
 ## Unreleased: Minesweeper levels, UI polish
 - Minesweeper: level selector (Easy 9x9, Medium 16x16, Hard 30x16), stopwatch and saved best times per level.
 - Removed the generated gradient wallpapers (Dusk, Night, Teal, Sunset, Mint, Grid); only Bliss and the photo wallpapers remain.

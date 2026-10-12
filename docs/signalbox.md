@@ -37,3 +37,10 @@ Routes that run in the same direction but start on different tracks and share tr
 
 ## Bell procedure for messages from the adjacent box
 2 (train entering section) and 2-1 (train out of section) now start with the neighbour ringing 1 (call attention). Answer 1 and it rings the message. Repeat the message to acknowledge it; the neighbour does not ring it again. If you do not answer, it calls attention up to three more times and then sends the message anyway.
+
+
+## Diagram and lever improvements (shared engine)
+- Hovering a signal or points lever (on the diagram or in the frame) draws a faint preview of the route it sets, so you can see what a lever does before pulling it.
+- Holding a signal lights that route as a blue animated line on the diagram, on top of the existing track-circuit dots.
+- Lever tooltips now show the route name (or "no route defined yet" for an unlocked signal).
+- A "Restore signals" button in the top bar puts back to danger any signal a train has already passed, so you don't have to click the lever a second time once its aspect has auto-returned to danger.
