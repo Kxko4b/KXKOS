@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased: Todo and Tic-tac-toe apps
+- New Todo app: add tasks, check them off, delete one, clear everything done. Saved in the browser.
+- New Tic-tac-toe app: two players, or against an unbeatable computer (minimax).
+
 ## Unreleased: More useful settings
 - Settings: "Enable sound" toggle mutes/unmutes signal box and piano audio.
 - Settings: "Reduce motion and animations" disables window/button transitions and the signal-box route-line animation, independent of the OS-level reduced-motion preference.

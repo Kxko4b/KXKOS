@@ -1556,3 +1556,29 @@ html.kx-reduce-motion * { transition: none !important; animation: none !importan
 @keyframes kx-sb-flow { to { stroke-dashoffset: -24; } }
 .kx-sb-pt, .kx-sb-sig { cursor: pointer; }
 .kx-btn:disabled.kx-sb-restore-dim { opacity: .4; }
+
+.kx-set-select { font: inherit; color: var(--kx-ink); background: var(--kx-paper-3); border: 2px solid var(--kx-ink); padding: 4px 6px; }
+
+/* ----------------------------------------------------------------------- Todo */
+.kx-todo { display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 8px; }
+.kx-todo-bar { display: flex; gap: 8px; }
+.kx-todo-bar input { flex: 1; }
+.kx-todo-list { flex: 1; min-height: 0; overflow: auto; margin: 0; padding: 0; list-style: none; border: 2px solid var(--kx-ink); background: var(--kx-paper-3); }
+.kx-todo-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 2px solid rgba(27, 42, 73, .18); }
+.kx-todo-item:last-child { border-bottom: none; }
+.kx-todo-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--kx-accent); flex: none; }
+.kx-todo-text { flex: 1; word-break: break-word; }
+.kx-todo-done { text-decoration: line-through; opacity: .55; }
+.kx-todo-del { flex: none; background: none; border: none; font-size: 18px; font-weight: 800; line-height: 1; color: var(--kx-ink); opacity: .5; cursor: pointer; padding: 0 4px; }
+.kx-todo-del:hover { opacity: 1; color: #c0392b; }
+.kx-todo-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* ------------------------------------------------------------------ Tic-tac-toe */
+.kx-ttt { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px; height: 100%; box-sizing: border-box; }
+.kx-ttt-bar { display: flex; gap: 8px; align-items: center; }
+.kx-ttt-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; max-width: 260px; aspect-ratio: 1; }
+.kx-ttt-cell { background: var(--kx-paper-3); border: 2px solid var(--kx-ink); box-shadow: 2px 2px 0 var(--kx-ink); font-size: 34px; font-weight: 800; display: grid; place-items: center; cursor: pointer; }
+.kx-ttt-cell:disabled { cursor: default; }
+.kx-ttt-cell.kx-ttt-x { color: #e5484d; }
+.kx-ttt-cell.kx-ttt-o { color: #2f6fd6; }
+.kx-ttt-status { font-weight: 700; }

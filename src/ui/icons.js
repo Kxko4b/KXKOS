@@ -93,6 +93,21 @@
     signal:
       '<rect x="14" y="12" width="4" height="18" fill="' + INK + '"/><rect x="9" y="3" width="14" height="12" rx="2" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
       '<circle cx="16" cy="9" r="3" fill="#e5484d"/>',
+
+    todo:
+      '<rect x="5" y="4" width="22" height="24" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<rect x="9" y="9" width="5" height="5" fill="#8fe39a" stroke="' + INK + '" stroke-width="2"/>' +
+      '<path d="M10 11.5l1.4 1.4 2.2-2.6" fill="none" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M17 11.5h7" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/>' +
+      '<rect x="9" y="18" width="5" height="5" fill="none" stroke="' + INK + '" stroke-width="2"/>' +
+      '<path d="M17 20.5h7" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/>',
+
+    ttt:
+      '<rect x="4" y="4" width="24" height="24" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<path d="M12 5v22M20 5v22M5 12h22M5 20h22" stroke="' + INK + '" stroke-width="2"/>' +
+      '<path d="M7.5 9.5l5 5m0-5l-5 5" stroke="#e5484d" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<circle cx="24" cy="16" r="3.4" fill="none" stroke="#2f6fd6" stroke-width="2.4"/>' +
+      '<path d="M7.5 25l5-5m0 5l-5-5" stroke="#e5484d" stroke-width="2.4" stroke-linecap="round"/>',
   };
 
   /** SVG markup for a named icon at the given pixel size (default 32). */
