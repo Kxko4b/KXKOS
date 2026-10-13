@@ -65,6 +65,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
   z-index: 1;
   overflow: hidden;
 }
+body[data-taskbar-pos="top"] #kx-desktop { inset: var(--kx-taskbar-h) 0 0 0; }
+body[data-taskbar-pos="top"] #kx-taskbar { top: 0; bottom: auto; border-bottom: 3px solid var(--kx-ink); border-top: none; }
+body[data-taskbar-pos="top"] #kx-start-menu { top: calc(var(--kx-taskbar-h) + 4px); bottom: auto; }
 #kx-icons {
   position: absolute;
   inset: 0;
@@ -480,8 +483,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 /* -------------------------------------------------------------------- Settings */
 
 .kx-settings { flex: 1; min-height: 0; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
-.kx-set-section { padding: 10px 12px 12px; background: var(--kx-paper-3); border: 2px solid var(--kx-ink); }
-.kx-set-title { margin: 0 0 8px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.kx-set-section { position: relative; margin-top: 10px; padding: 14px 12px 12px; background: var(--kx-paper-3); border: 2px solid var(--kx-ink); }
+.kx-set-title {
+  position: absolute; top: -11px; left: 10px;
+  margin: 0; padding: 0 6px; background: var(--kx-paper-3);
+  font-size: 13px; font-weight: 800;
+}
 .kx-set-note { margin: 6px 0 0; font-size: 12px; opacity: 0.75; }
 .kx-wp-grid, .kx-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
 .kx-wp-choice { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; background: transparent; border: 2px solid transparent; cursor: pointer; font-weight: 700; }

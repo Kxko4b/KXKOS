@@ -31,6 +31,10 @@
     document.getElementById('kx-desktop').setAttribute('data-icon-size', size);
   }
 
+  function applyTaskbarPosition(pos) {
+    document.body.setAttribute('data-taskbar-pos', pos);
+  }
+
   /* ------------------------------------------------------------ desktop icons */
 
   function renderIcons() {
@@ -155,6 +159,7 @@
       applyAccent(KX.settings.get('accent'));
       applyReduceMotion(KX.settings.get('reduceMotion'));
       applyIconSize(KX.settings.get('iconSize'));
+      applyTaskbarPosition(KX.settings.get('taskbarPosition'));
       renderIcons();
       KX.on('apps:changed', renderIcons);
       KX.on('settings:changed', (change) => {
@@ -162,6 +167,7 @@
         if (change.key === 'accent') applyAccent(change.value);
         if (change.key === 'reduceMotion') applyReduceMotion(change.value);
         if (change.key === 'iconSize') { applyIconSize(change.value); renderIcons(); }
+        if (change.key === 'taskbarPosition') applyTaskbarPosition(change.value);
       });
 
       // Clicking the bare desktop clears the icon selection and dismisses the start menu.

@@ -142,6 +142,7 @@
     iconSize: 'medium',
     screensaverEnabled: true,
     screensaverMinutes: 3,
+    taskbarPosition: 'bottom',
   };
 
   function sanitize(input) {
@@ -155,6 +156,7 @@
     if (!ICON_SIZES.includes(out.iconSize)) out.iconSize = DEFAULTS.iconSize;
     out.screensaverEnabled = !!out.screensaverEnabled;
     out.screensaverMinutes = KX.clamp(Math.round(Number(out.screensaverMinutes) || DEFAULTS.screensaverMinutes), 1, 30);
+    if (out.taskbarPosition !== 'top' && out.taskbarPosition !== 'bottom') out.taskbarPosition = DEFAULTS.taskbarPosition;
     return {
       wallpaper: out.wallpaper,
       accent: out.accent,
@@ -164,6 +166,7 @@
       iconSize: out.iconSize,
       screensaverEnabled: out.screensaverEnabled,
       screensaverMinutes: out.screensaverMinutes,
+      taskbarPosition: out.taskbarPosition,
     };
   }
 

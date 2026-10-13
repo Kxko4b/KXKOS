@@ -5,7 +5,9 @@
 - Settings: "Reduce motion and animations" disables window/button transitions and the signal-box route-line animation, independent of the OS-level reduced-motion preference.
 - Settings: desktop icon size (Small / Medium / Large).
 - Settings: screensaver on/off toggle and an idle-time-in-minutes field (was a fixed 3 minutes).
+- Settings: taskbar position (Bottom / Top).
 - "Reset appearance" now also restores these to their defaults.
+- Settings group boxes now use a classic recessed-frame label (title sits on the border) instead of a tracked-out all-caps heading.
 
 ## Unreleased: Signal box route lines and restore button
 - Both signal boxes: hovering a lever previews the route it sets as a faint line on the diagram; a held signal lights its route as an animated blue line.

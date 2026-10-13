@@ -94,6 +94,15 @@
       });
       saverMinutes.addEventListener('change', () => KX.settings.set('screensaverMinutes', +saverMinutes.value));
 
+      /* ----- taskbar ----- */
+
+      const taskbarSel = el(
+        'select',
+        { class: 'kx-set-select', onchange: () => KX.settings.set('taskbarPosition', taskbarSel.value) },
+        el('option', { value: 'bottom', text: 'Bottom' }),
+        el('option', { value: 'top', text: 'Top' })
+      );
+
       /* ----- sync UI with the settings store ----- */
 
       function sync() {
@@ -117,6 +126,7 @@
         saverInput.checked = KX.settings.get('screensaverEnabled');
         saverMinutes.value = String(KX.settings.get('screensaverMinutes'));
         saverMinutes.disabled = !saverInput.checked;
+        taskbarSel.value = KX.settings.get('taskbarPosition');
       }
       const unsubscribe = KX.on('settings:changed', sync);
       win.onClose = unsubscribe;
@@ -164,6 +174,10 @@
           section(
             'Desktop icons',
             el('div', { class: 'kx-set-row' }, el('label', null, 'Icon size ', iconSizeSel))
+          ),
+          section(
+            'Taskbar',
+            el('div', { class: 'kx-set-row' }, el('label', null, 'Position ', taskbarSel))
           ),
           section(
             'Screensaver',
