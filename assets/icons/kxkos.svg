@@ -2,11 +2,18 @@
   <title>KXKOS</title>
   <defs>
     <clipPath id="c"><rect x="1" y="1" width="30" height="30" rx="6"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2f9be9"/>
+      <stop offset="58%" stop-color="#7ec7ef"/>
+      <stop offset="76%" stop-color="#d6efff"/>
+    </linearGradient>
   </defs>
-  <rect x="1" y="1" width="30" height="30" rx="6" fill="#3b9be9"/>
+  <rect x="1" y="1" width="30" height="30" rx="6" fill="url(#sky)"/>
   <g clip-path="url(#c)">
-    <circle cx="22" cy="11" r="5" fill="#ffe36b" stroke="#1b2a49" stroke-width="1.5"/>
-    <path d="M0 25 Q9 16 19 21 T32 19 V32 H0 Z" fill="#4cb04f" stroke="#1b2a49" stroke-width="1.5"/>
+    <ellipse cx="9" cy="8" rx="5.5" ry="2.4" fill="#fff" opacity=".95"/>
+    <ellipse cx="22" cy="6.5" rx="4.5" ry="2" fill="#fff" opacity=".85"/>
+    <path d="M-1 27 Q6 19 14 23 T33 20 V33 H-1 Z" fill="#4d9d3b"/>
+    <path d="M-1 29 Q6 22 14 25 T33 23 V33 H-1 Z" fill="#76b94d"/>
   </g>
   <rect x="1" y="1" width="30" height="30" rx="6" fill="none" stroke="#1b2a49" stroke-width="2"/>
 </svg>

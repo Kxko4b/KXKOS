@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: Icon and favicon refresh
+- Favicon (and the taskbar KXKOS logo, which shares the file) now matches the Bliss default wallpaper: blue-sky gradient, clouds, rolling green hill. It previously showed a sun and a different hill shape, which didn't match any wallpaper.
+- All app icons now cast the same hard offset shadow used everywhere else in KXKOS (buttons, windows, wallpaper thumbnails), so they read as part of the same chunky, own-brand chrome instead of a flat generic icon pack.
+- Redrew the Settings icon as an actual toothed gear (was a plain dashed ring, one of the most common stock "AI" gear icons) and gave the search icon a chunkier glass and handle to match.
+
 ## Unreleased: Todo and Tic-tac-toe apps
 - New Todo app: add tasks, check them off, delete one, clear everything done. Saved in the browser.
 - New Tic-tac-toe app: two players, or against an unbeatable computer (minimax).

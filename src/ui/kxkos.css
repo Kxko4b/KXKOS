@@ -40,7 +40,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
   outline: 2px dashed var(--kx-ink);
   outline-offset: 2px;
 }
-.kx-icon { display: block; flex: none; }
+.kx-icon { display: block; flex: none; filter: drop-shadow(1.5px 1.5px 0 rgba(27, 42, 73, .4)); }
 
 /* ------------------------------------------------------------------ wallpapers */
 

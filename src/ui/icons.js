@@ -24,10 +24,9 @@
       '</g>',
 
     settings:
-      '<circle cx="16" cy="16" r="11.5" fill="none" stroke="' + INK + '" stroke-width="5" stroke-dasharray="4.5 4.53"/>' +
-      '<circle cx="16" cy="16" r="11.5" fill="none" stroke="#9aa8c4" stroke-width="2.2" stroke-dasharray="4.5 4.53"/>' +
-      '<circle cx="16" cy="16" r="9.5" fill="#9aa8c4" stroke="' + INK + '" stroke-width="2"/>' +
-      '<circle cx="16" cy="16" r="3.5" fill="#f4efe0" stroke="' + INK + '" stroke-width="2"/>',
+      '<path d="M16 2l2.6 3.2 3.9-1.3 1.3 3.9 4 .9-.9 4 3.2 2.6-3.2 2.6.9 4-4 .9-1.3 3.9-3.9-1.3L16 30l-2.6-3.2-3.9 1.3-1.3-3.9-4-.9.9-4L2 16l3.2-2.6-.9-4 4-.9 1.3-3.9 3.9 1.3z"' +
+      ' fill="#9aa8c4" stroke="' + INK + '" stroke-width="2" stroke-linejoin="round"/>' +
+      '<circle cx="16" cy="16" r="5.5" fill="#f4efe0" stroke="' + INK + '" stroke-width="2"/>',
 
     terminal:
       '<rect x="3" y="6" width="26" height="20" rx="2" fill="#0f1a2e" stroke="' + INK + '" stroke-width="2"/>' +
@@ -44,8 +43,9 @@
       '<path d="M11 15h11M11 19h11M11 23h7" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/>',
 
     search:
-      '<circle cx="13.5" cy="13.5" r="8.5" fill="#fff" stroke="' + INK + '" stroke-width="2.5"/>' +
-      '<path d="M20 20l7 7" stroke="' + INK + '" stroke-width="3.5" stroke-linecap="round"/>',
+      '<circle cx="13.5" cy="13.5" r="8.5" fill="#fff6dc" stroke="' + INK + '" stroke-width="2.5"/>' +
+      '<circle cx="10.5" cy="10.5" r="2.6" fill="#fff" opacity=".8"/>' +
+      '<path d="M19.5 19.5l7.5 7.5" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>',
 
     mine:
       '<path d="M16 3v6M16 23v6M3 16h6M23 16h6M7 7l4 4M21 21l4 4M25 7l-4 4M11 21l-4 4" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round"/>' +
