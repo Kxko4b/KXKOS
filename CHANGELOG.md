@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: AI voice (TTS)
+- New `KXKOS.tts.speak(text)` / `stop()` in `src/core/tts.js`: natural voice via a Cloudflare Worker that proxies ElevenLabs. The API key stays in the Worker, never in the frontend.
+- Terminal: `say <text>` speaks, `say stop` stops, `say url <worker-url>` saves the Worker URL in this browser.
+- Respects Settings > "Enable sound".
+
 ## Unreleased: Icon and favicon refresh
 - Favicon (and the taskbar KXKOS logo, which shares the file) now matches the Bliss default wallpaper: blue-sky gradient, clouds, rolling green hill. It previously showed a sun and a different hill shape, which didn't match any wallpaper.
 - All app icons now cast the same hard offset shadow used everywhere else in KXKOS (buttons, windows, wallpaper thumbnails), so they read as part of the same chunky, own-brand chrome instead of a flat generic icon pack.

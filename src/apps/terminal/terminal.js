@@ -134,6 +134,21 @@
     },
   });
 
+  register('say', {
+    help: 'AI voice (say <text> | say url <worker-url> | say stop)',
+    run: (ctx, args) => {
+      const sub = (args[0] || '').toLowerCase();
+      if (!args.length) return ctx.print('Usage: say <text> | say url <worker-url> | say stop', 'dim');
+      if (sub === 'stop') return KX.tts.stop();
+      if (sub === 'url') {
+        if (!args[1]) return ctx.print('Voice URL: ' + (KX.tts.getUrl() || '(not set)'), 'dim');
+        KX.tts.setUrl(args[1]);
+        return ctx.print('Voice URL saved.', 'ok');
+      }
+      KX.tts.speak(args.join(' ')).catch((err) => ctx.print(err.message, 'err'));
+    },
+  });
+
   register('settings', {
     help: 'Open Settings',
     run: (ctx) => {
