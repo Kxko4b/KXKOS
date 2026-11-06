@@ -229,8 +229,8 @@
         if (e.key === 'Enter') { e.preventDefault(); calculate(); }
       });
       renderVars(); renderHistory(); setMode('standard');
-      expr.value = 'sqrt(3^2 + 4^2)';
-      calculate();
+      expr.value = '';
+      result.textContent = '0';
     }
   });
 })();
