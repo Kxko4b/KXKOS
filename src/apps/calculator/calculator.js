@@ -99,7 +99,7 @@
     id: 'calculator', title: 'Taschenrechner', icon: 'calculator',
     width: 590, height: 650, minWidth: 340, minHeight: 460, desktop: true, order: 30,
     launch(win) {
-      const vars = Object.create(null);
+      const vars = Object.create(null);\n      const customFns = Object.create(null);
       let history = [];
       let mode = 'standard';
       const root = el('div', { class: 'kx-calc kx-calc-pro', tabindex: '0', 'data-autofocus': '' });
@@ -129,7 +129,7 @@
       }
       function calculate() {
         try {
-          const n = evaluate(expr.value, vars);
+          const n = evaluate(expr.value, vars, customFns);
           result.textContent = format(n);
           message.textContent = 'Berechnung erfolgreich';
           message.classList.remove('is-error');
@@ -163,7 +163,7 @@
             message.classList.add('is-error'); return;
           }
           try {
-            vars[key] = evaluate(value.value, vars);
+            vars[key] = evaluate(value.value, vars, customFns);
             name.value = ''; value.value = ''; renderVars();
             message.textContent = 'Variable gespeichert'; message.classList.remove('is-error');
           } catch (e) { message.textContent = e.message; message.classList.add('is-error'); }
