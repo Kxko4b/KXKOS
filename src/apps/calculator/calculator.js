@@ -57,7 +57,9 @@
           take();
           const arg = sum();
           if (take() !== ')') throw new Error('Missing closing bracket');
-          if (FUNCTIONS[name]) return FUNCTIONS[name](arg);\n          const fn = customFns[name];\n          return evaluate(fn.expression.replace(new RegExp('\\\\b' + fn.parameter + '\\\\b', 'g'), '(' + arg + ')'), vars, customFns);
+          if (FUNCTIONS[name]) return FUNCTIONS[name](arg);
+          const fn = customFns[name];
+          return evaluate(fn.expression.replace(new RegExp('\\\\b' + fn.parameter + '\\\\b', 'g'), '(' + arg + ')'), vars, customFns);
         }
         if (name === 'pi') return Math.PI;
         if (name === 'e') return Math.E;
@@ -99,7 +101,8 @@
     id: 'calculator', title: 'Taschenrechner', icon: 'calculator',
     width: 590, height: 650, minWidth: 340, minHeight: 460, desktop: true, order: 30,
     launch(win) {
-      const vars = Object.create(null);\n      const customFns = Object.create(null);
+      const vars = Object.create(null);
+      const customFns = Object.create(null);
       let history = [];
       let mode = 'standard';
       const root = el('div', { class: 'kx-calc kx-calc-pro', tabindex: '0', 'data-autofocus': '' });
@@ -210,7 +213,7 @@
           message.textContent = 'Pythagoras-Berechnung abgeschlossen'; message.classList.remove('is-error');
         }, 'kx-calc-wide'));
       }
-      const customFns = Object.create(null);\n      function equations() {
+      function equations() {
         toolsBox.replaceChildren(
           el('h3', { text: 'Funktionen & Gleichungen' }),
           el('p', { class: 'kx-calc-muted', text: 'Funktion definieren, z. B. f(x) = 2x + 3. Danach f(4) im Rechner eingeben.' })
